@@ -14,89 +14,177 @@ public class BulletSpawner : MonoBehaviour
     [Header("枪械设置")]
     [Tooltip("子弹攻击速度")] public float attackSpeed;
     [Tooltip("子弹攻击范围")] public float attackRange;
-    [Tooltip("初始发射数量")] public int attackCount;
-    private float attackTimer;
-    private bool attackFlag;
+    public int init_count; //初始发射子弹数量
+    private bool attackFlag;    //是否进行自动攻击
     private readonly LinkedList<EnemyController> enemyInRange = new();
+    private readonly Queue<Bullet.BulletType> bullets = new();
 
     public UnityEvent fireEvent;    //发射事件
     #endregion
     void Start()
     {
-        attackTimer = attackSpeed;
         attackFlag = true;
         StartCoroutine(DectEnemyInRange());
+        InvokeRepeating(nameof(LoadBullet), 0, attackSpeed);
     }
 
     void Update()
     {
         //如果角色死亡或时间到，直接返回
         if (PlayerController.Instance.Live() == false || TimeController.Instance.TimeUp())
-            return;
-
-        //如果敌人不在范围内，或未到攻击时间，直接返回
-        if (attackFlag)
         {
-            //发射子弹
-            if (Fire(Bullet.BulletType.Normal_Bullet, attackCount))
-            {
-                fireEvent.Invoke(); //发射事件
-                attackFlag = false;
-                attackTimer = attackSpeed;
-            }
+            attackFlag = false;
+            enemyInRange.Clear();
+            bullets.Clear();
+            return;
         }
-            else
-            {
-                attackTimer -= Time.deltaTime;
-                if (attackTimer <= 0)
-                    attackFlag = true;
-            }
-
+        if(attackFlag && enemyInRange.Count != 0 && bullets.Count != 0)
+        {
+            StartCoroutine(Fire());
+        }
     }
 
-    public bool Fire(Bullet.BulletType bulletType, int count = 1)
+    public void LoadBullet()
     {
-        var node = enemyInRange.First;
-        int cnt = 0; //发射数量
-        
-        while (cnt < count && node != null)  // 添加了node != null检查，防止无限循环
+        for(int i = 0; i < init_count; i++)
         {
-            EnemyController target = null;
-            while (node != null)
-            {
-                target = node.Value;
-                var temp = node;
-                node = node.Next;
-                if (target == null || !target.Live())
-                {
-                    enemyInRange.Remove(temp);
-                    target = null;
-                }
-                else
-                    break;
-            }
+            bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+        }
+    }
+    public void LoadBullet(Bullet.BulletType bulletType, int count)
+    {
+        if (count == -1)
+            count = init_count;
+        for (int i = 0; i < count; i++)
+        {
+            bullets.Enqueue(bulletType);
+        }
+    }
+    public IEnumerator SetFireFlagFalse(float time)
+    {
+        yield return new WaitForSeconds(time);
+        attackFlag = true;
+    }
 
-            if (target != null)
-            {
-                GameObject bulletPrefab = LoadBulletPrefab(bulletType);
-                if (bulletPrefab == null)
-                {
-                    Debug.LogError("子弹预设体" + bulletType + "加载失败");
-                    return false;
-                }
-                GameObject bullet = ObjectPool.Instance.GetObject(bulletPrefab);
-                bullet.transform.position = transform.position;
-                bullet.GetComponent<Bullet>().SetSpeed((target.transform.position - transform.position).normalized);
-                cnt++;
-            }
-            else
-            {
-                // 没有更多有效目标，退出循环
-                break;
-            }
+    // public void Fire()
+    // {
+    //     var node = enemyInRange.First;
+    //     int cnt = 0; //发射数量
+
+    //     while (cnt < count && node != null)  // 添加了node != null检查，防止无限循环
+    //     {
+    //         EnemyController target = null;
+    //         while (node != null)
+    //         {
+    //             target = node.Value;
+    //             var temp = node;
+    //             node = node.Next;
+    //             if (target == null || !target.Live())
+    //             {
+    //                 enemyInRange.Remove(temp);
+    //                 target = null;
+    //             }
+    //             else
+    //                 break;
+    //         }
+
+    //         if (target != null)
+    //         {
+    //             GameObject bulletPrefab = LoadBulletPrefab(bulletType);
+    //             if (bulletPrefab == null)
+    //             {
+    //                 Debug.LogError("子弹预设体" + bulletType + "加载失败");
+    //                 return false;
+    //             }
+    //             GameObject bullet = ObjectPool.Instance.GetObject(bulletPrefab);
+    //             bullet.transform.position = transform.position;
+    //             bullet.GetComponent<Bullet>().SetSpeed((target.transform.position - transform.position).normalized);
+    //             cnt++;
+    //         }
+    //         else
+    //         {
+    //             // 没有更多有效目标，退出循环
+    //             break;
+    //         }
+    //     }
+
+    //     return cnt != 0;
+    // }
+
+    //将bullets队列中的子弹发射出去
+    public IEnumerator Fire()
+    {
+        if (!attackFlag || bullets.Count == 0 || enemyInRange.Count == 0)
+            yield break;
+        int cnt = 0; //发射数量
+
+        //存储有效敌人
+        LinkedList<Transform> enemies = new();
+        var temp_node = enemyInRange.First;
+        while (temp_node != null)
+        {
+            if (temp_node.Value != null && temp_node.Value.Live())
+                enemies.AddLast(temp_node.Value.transform);
+            temp_node = temp_node.Next;
         }
 
-        return cnt != 0;
+        //存储子弹类型
+        Queue<Bullet.BulletType> copy_bullets = new(bullets);
+        bullets.Clear();
+
+
+        var node = enemies.First; // 获取第一个敌人
+        while (copy_bullets.Count != 0)
+        {
+            if (node == null)
+            {
+                if(enemies.Count == 0)
+                    break; // 如果没有敌人了，退出循环
+                node = enemies.First; // 如果node为空，则重新获取第一个敌人
+            }
+            Transform target = node.Value;
+
+            if(target == null)
+            {
+                enemies.Remove(node);
+                node = node.Next;
+                continue;
+            }
+            Bullet.BulletType bulletType = copy_bullets.Dequeue();
+            GameObject bulletPrefab = LoadBulletPrefab(bulletType);
+            if (bulletPrefab == null)
+            {
+                Debug.LogError("子弹预设体" + bulletType + "加载失败");
+                yield break;
+            }
+            GameObject bullet = ObjectPool.Instance.GetObject(bulletPrefab);
+            bullet.transform.position = transform.position;
+            bullet.GetComponent<Bullet>().SetSpeed((target.transform.position - transform.position).normalized);
+
+            node = node.Next; // 获取下一个敌人
+            cnt++;
+            attackFlag = false;
+            yield return new WaitForSeconds(0.05f); // 等待0.05秒
+        }
+
+        StartCoroutine(SetFireFlagFalse(attackSpeed));
+        fireEvent.Invoke();
+    }
+    
+    // 启动Fire协程的方法
+    public void StartFire()
+    {
+        Debug.Log("StartFire");
+        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+        if (!attackFlag || bullets.Count == 0 || enemyInRange.Count == 0)
+            return;
+        Debug.Log("子弹数量：" + bullets.Count);
+        Debug.Log("敌人数量：" + enemyInRange.Count);
+        Debug.Log("发射子弹");
+        StartCoroutine(Fire());
     }
 
     private IEnumerator DectEnemyInRange()

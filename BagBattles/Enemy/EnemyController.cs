@@ -107,7 +107,7 @@ public class EnemyController : MonoBehaviour
             return false;
         if (invincible_flag == false && live)
         {
-            if (invincible_time != 0) invincible_flag = true;
+            // if (invincible_time != 0) invincible_flag = true;
 
             currentHP -= damage;
             if (currentHP <= 0f)
@@ -115,8 +115,8 @@ public class EnemyController : MonoBehaviour
                 live = false;
                 rb.velocity = Vector2.zero;
                 ObjectPool.Instance.PushObject(gameObject);
-                return true;
             }
+            return true;
         }
         return false;
     }
@@ -138,15 +138,15 @@ public class EnemyController : MonoBehaviour
         }
 
         //invincible timer
-        if (invincible_flag == true)
-        {
-            invincible_timer += deltaTime;
-            if (invincible_timer > invincible_time)
-            {
-                invincible_flag = false;
-                invincible_timer = 0f;
-            }
-        }
+        // if (invincible_flag == true)
+        // {
+        //     invincible_timer += deltaTime;
+        //     if (invincible_timer > invincible_time)
+        //     {
+        //         invincible_flag = false;
+        //         invincible_timer = 0f;
+        //     }
+        // }
 
         //ice
         if (ice_flag == true)
@@ -178,6 +178,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    //FIXME:现在enmy之间没有碰撞检测
     protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (PlayerController.Instance.Live() == false)
@@ -185,7 +186,7 @@ public class EnemyController : MonoBehaviour
         if (attack_flag == false)
             return;
 
-        if(collision.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
             collision.gameObject.GetComponent<PlayerController>().TakeDamage(attack_damage);
     }
 
