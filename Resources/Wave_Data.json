@@ -1,0 +1,26 @@
+{
+    "waves": [
+        {
+            "enemy_type": 0,
+            "start_time": 0.0,
+            "hold_time": 20.0,
+            "_default": false,
+            "random": true,
+            "group": true,
+            "intensity": 0.5,
+            "spawn_nums": 5,
+            "spawn_time": 2
+        },
+        {
+            "enemy_type": 1,
+            "start_time": 0.0,
+            "hold_time": 8.0,
+            "_default": false,
+            "random": true,
+            "group": true,
+            "intensity": 0.2,
+            "spawn_nums": 0,
+            "spawn_time": 2
+        }
+    ]
+}

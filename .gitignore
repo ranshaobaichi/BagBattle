@@ -1,0 +1,20 @@
+# Ignore everything
+*
+
+# Allow directories to be traversed
+!*/
+
+# Include all C# files in any subdirectory
+!**/*.cs
+
+# Include the .vscode folder and everything inside it
+!.vscode/**
+
+# Include the .gitignore file itself
+!.gitignore
+
+#include the json files
+!**/*.json
+
+# Ignore the cainos folder and all its content
+cainos/
