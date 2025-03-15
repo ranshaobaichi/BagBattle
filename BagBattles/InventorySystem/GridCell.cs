@@ -8,7 +8,7 @@ public class GridCell : MonoBehaviour
     private bool canPlaceItem = true;  // 用于判断该格子是否可以放置物品
     public InventoryManager.GridPos gridPos;
     private Canvas canvas;
-    public InventoryItem.Type itemType; // 物品类型
+    public Item itemOnGrid; // 格子上放置的物品类型
 
     void Awake()
     {
@@ -20,7 +20,7 @@ public class GridCell : MonoBehaviour
     {
         gridPos = new InventoryManager.GridPos(p.gridX, p.gridY);
         SetNormal();
-        itemType = InventoryItem.Type.None; // 初始化物品类型为None
+        itemOnGrid = null; // 清空格子上的物品类型
     }
 
     public InventoryManager.GridPos GetPos() => gridPos;

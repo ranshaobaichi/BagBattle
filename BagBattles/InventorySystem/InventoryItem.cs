@@ -7,13 +7,6 @@ using UnityEngine.UI;
 public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [System.Serializable]
-    public enum Type
-    {
-        None,
-        Item,
-        Trigger
-    }
-    [System.Serializable]
     public enum Direction
     {
         UP,
@@ -48,7 +41,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private InventoryManager inventoryManager;
     private GameObject inventorySystem;
     [SerializeField]
-    private List<GridCell> currentLayOnGrid = new();   //在哪个块上
+    public List<GridCell> currentLayOnGrid = new();   //在哪个块上
     [SerializeField]
     private List<GridCell> previousLayOnGrid = new();
     private Transform previousParent;
@@ -58,8 +51,11 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private List<GridCell> previousHoveredCells = new();
     private Canvas canvas;
 
+    public Item item; // 物品脚本
+
     public void LayOnGrid(GridCell gridCell) => currentLayOnGrid.Add(gridCell);
     public Shape GetShape() => shape;
+    public Item.ItemType GetItemType() => item.GetItemType(); // 获取物品类型
     
     [ContextMenu("Rotate")]
     public void RotateTransform()
@@ -106,7 +102,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         foreach (GridCell gridCell in currentLayOnGrid)
         {
             gridCell.SetCanPlaceItem(true);
-            gridCell.itemType = Type.None; // 恢复格子物品类型
+            gridCell.itemOnGrid = null; // 恢复格子物品类型
         }
         previousHoveredCells.Clear(); // 清空上次检测的格子
         previousLayOnGrid.Clear(); // 清空上次检测的格子
@@ -160,6 +156,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             {
                 currentLayOnGrid.Add(gridCell);
                 gridCell.SetCanPlaceItem(false);
+                gridCell.itemOnGrid = item; // 恢复格子物品类型
             }
         }
 

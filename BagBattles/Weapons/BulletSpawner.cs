@@ -6,10 +6,10 @@ using UnityEngine.Events;
 
 public class BulletSpawner : MonoBehaviour
 {
+    public static BulletSpawner Instance { get; private set; } = null;
     #region 组件属性
     ///子弹预设体
     private Dictionary<Bullet.BulletType, GameObject> bulletPrefabs = new();
-
     //子弹发射器
     [Header("枪械设置")]
     [Tooltip("子弹攻击速度")] public float attackSpeed;
@@ -21,11 +21,20 @@ public class BulletSpawner : MonoBehaviour
 
     public UnityEvent fireEvent;    //发射事件
     #endregion
+
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else if (Instance != this)
+            Destroy(gameObject);
+    }
+
     void Start()
     {
         attackFlag = true;
         StartCoroutine(DectEnemyInRange());
-        InvokeRepeating(nameof(LoadBullet), 0, attackSpeed);
+        InvokeRepeating(nameof(LoadBullet), attackSpeed, attackSpeed);
     }
 
     void Update()
@@ -46,7 +55,7 @@ public class BulletSpawner : MonoBehaviour
 
     public void LoadBullet()
     {
-        for(int i = 0; i < init_count; i++)
+        for (int i = 0; i < init_count; i++)
         {
             bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
         }
@@ -171,22 +180,6 @@ public class BulletSpawner : MonoBehaviour
         fireEvent.Invoke();
     }
     
-    // 启动Fire协程的方法
-    public void StartFire()
-    {
-        Debug.Log("StartFire");
-        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
-        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
-        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
-        bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
-        if (!attackFlag || bullets.Count == 0 || enemyInRange.Count == 0)
-            return;
-        Debug.Log("子弹数量：" + bullets.Count);
-        Debug.Log("敌人数量：" + enemyInRange.Count);
-        Debug.Log("发射子弹");
-        StartCoroutine(Fire());
-    }
-
     private IEnumerator DectEnemyInRange()
     {
         while (PlayerController.Instance == null || TimeController.Instance == null)

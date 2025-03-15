@@ -41,7 +41,7 @@ public class Bullet : MonoBehaviour
         rigidbody = GetComponent<Rigidbody2D>();
     }
 
-    public void Onnable()
+    public void OnEnable()
     {
         current_pass_num = bulletBasicAttribute.bullet_pass_nums;
     }

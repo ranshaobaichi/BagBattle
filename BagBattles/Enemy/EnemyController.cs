@@ -178,7 +178,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    //FIXME:现在enmy之间没有碰撞检测
+    //BUG:现在enmy之间没有碰撞检测
     protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (PlayerController.Instance.Live() == false)

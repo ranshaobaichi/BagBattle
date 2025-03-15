@@ -8,12 +8,12 @@ using UnityEngine.UIElements;
 
 public class InventoryManager : MonoBehaviour
 {
+    public static InventoryManager Instance { get; set; }
     [System.Serializable]
     public struct GridPos
     {
         public static int rows;
         public static int columns;
-
         public GridPos(int x, int y) => (gridX, gridY) = (x, y);
         public int gridX;
         public int gridY;
@@ -32,7 +32,28 @@ public class InventoryManager : MonoBehaviour
     public int columns; // 网格列数
     // private List<List<GridCell>> gridCells;
     private List<InventoryItem> existItem = new();
-    private Dictionary<GridPos, GridCell> gridCells = new();
+    private Dictionary<GridPos, GridCell> gridCells = new();// 网格字典
+    private List<TriggerItem> triggerItems = new(); // 触发器列表
+
+    public Item GetItemOnGridcell(GridPos pos) => gridCells[pos].itemOnGrid; // 获取格子上的物品类型
+    public int GetGridHeight() => rows; // 修正以获取网格高度
+    public int GetGridWidth() => columns; // 修正以获取网格宽度
+    public void AddTriggerItem(TriggerItem item) => triggerItems.Add(item); // 添加触发器
+    public void TriggerTriggerItem()
+    {
+        foreach (var item in triggerItems)
+        {
+            item.DetectItems();
+        }
+    }
+
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else if (Instance != this)
+            Destroy(gameObject);
+    }
 
     void Start()
     {
@@ -88,6 +109,7 @@ public class InventoryManager : MonoBehaviour
             {
                 // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
                 gridCells[cell].SetCanPlaceItem(false);
+                gridCells[cell].itemOnGrid = item.item; // 设置格子物品类型
                 item.LayOnGrid(gridCells[cell]);
             }
             item.transform.SetParent(gridCells[target[0]].transform);
