@@ -1,133 +1,87 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TriggerItem : Item
+public class TriggerItem : MonoBehaviour
 {
-    [Serializable]
-    [Tooltip("触发范围")]
-    public enum TriggerRange
+    [Header("触发器类道具")]
+    private Trigger.BaseTriggerAttribute triggerItemAttribute;
+    private HashSet<Item> items = new();    // 触发器可触发的物品
+    public void Initialize(Trigger.BaseTriggerAttribute type, Dictionary<Item.ItemType, List<object>> triggerItem)
     {
-        [Tooltip("单格")] SingleCell,
-        [Tooltip("双格")] DoubleCell,
+        triggerItemAttribute = type;
+        foreach (var (itemKey, itemValue) in triggerItem)
+            switch (itemKey)
+            {
+                case Item.ItemType.BulletItem:
+                    foreach (var item in itemValue)
+                    {
+                        BulletItem tmp = new()
+                        {
+                            bulletAttribute = (Item.BulletItemAttribute)item
+                        };
+                        items.Add(tmp);
+                    }
+                    break;
+                case Item.ItemType.FoodItem:
+                    Debug.LogError("FoodItem触发器未实现");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
     }
 
-    // 触发类型枚举
-    [Serializable]
-    [Tooltip("触发方式")]
-    public enum TriggerType
+    public void StartTrigger()
     {
-        [Tooltip("按时间触发")] ByTime,
-        [Tooltip("按开火次数触发")] ByFireTimes,
-    }
-
-    [SerializeField] private TriggerRange triggerRange;
-    [SerializeField] private TriggerType triggerType;
-
-    // 按时间触发的配置
-    [SerializeField] private float triggerTime;
-
-    // 按开火次数触发的配置
-    [SerializeField] private int triggerFireCount;
-
-    public InventoryItem inventoryItem;
-    public List<Item> triggerItems = new(); //记录该触发器可触发的物品
-
-    public override void UseItem() => DetectItems();
-
-    public void DetectItems()
-    {
-        triggerItems.Clear();
-        // 触发逻辑
-        switch (triggerRange)
+        Debug.Log("触发器开始工作");
+        // 触发器的使用逻辑
+        switch (triggerItemAttribute.triggerType)
         {
-            case TriggerRange.SingleCell:
-                TriggerDirection(inventoryItem.GetShape().itemDirection, 1);
+            case Trigger.TriggerType.ByTime:
+                if (triggerItemAttribute is Trigger.TimeTriggerAttribute timeAttr)
+                {
+                    InvokeRepeating(nameof(TriggerItems), timeAttr.triggerTime, timeAttr.triggerTime);
+                    
+                    // 如果设置了持续时间，安排停止触发
+                    if (timeAttr.duration > 0)
+                    {
+                        Invoke(nameof(StopTrigger), timeAttr.duration);
+                    }
+                }
+                else if (triggerItemAttribute is Trigger.TriggerItemAttribute legacyAttr)
+                {
+                    // 兼容旧代码
+                    InvokeRepeating(nameof(TriggerItems), legacyAttr.triggerTime, legacyAttr.triggerTime);
+                }
                 break;
-            case TriggerRange.DoubleCell:
-                TriggerDirection(inventoryItem.GetShape().itemDirection, 2);
+            case Trigger.TriggerType.ByFireTimes:
+                // 在这里实现基于开火次数的触发逻辑
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
-
-    private HashSet<Item> TriggerDirection(InventoryItem.Direction direction, int cellCount)
+    public void StopTrigger()
     {
-        InventoryManager.GridPos basePos = inventoryItem.currentLayOnGrid[0].gridPos;
-        // 处理触发方向和单元格数量的逻辑
-        switch (direction)
+        // 触发器的停用逻辑
+        switch (triggerItemAttribute.triggerType)
         {
-            case InventoryItem.Direction.UP:
-                // 处理向上触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
-                {
-                    if (pos.gridPos.gridY < basePos.gridY)
-                        basePos = pos.gridPos;
-                }
-                basePos.gridY--;    // 刨除当前格子
-                while (basePos.gridY >= 0 && cellCount > 0)
-                {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp != null && tmp.GetItemType() != ItemType.TriggerItem && !triggerItems.Contains(tmp))
-                        triggerItems.Add(InventoryManager.Instance.GetItemOnGridcell(basePos));
-                    basePos.gridY--;
-                    cellCount--;
-                }
+            case Trigger.TriggerType.ByTime:
+                CancelInvoke(nameof(TriggerItems));
                 break;
-            case InventoryItem.Direction.DOWN:
-                // 处理向下触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
-                {
-                    if (pos.gridPos.gridY > basePos.gridY)
-                        basePos = pos.gridPos;
-                }
-                basePos.gridY++;    // 刨除当前格子
-                while (basePos.gridY < InventoryManager.Instance.GetGridHeight() && cellCount > 0)
-                {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp.GetItemType() != Item.ItemType.TriggerItem && !triggerItems.Contains(tmp))
-                        triggerItems.Add(tmp);
-                    basePos.gridY++;
-                    cellCount--;
-                }
-                break;
-            case InventoryItem.Direction.LEFT:
-                // 处理向左触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
-                {
-                    if (pos.gridPos.gridX < basePos.gridX)
-                        basePos = pos.gridPos;
-                }
-                basePos.gridX--;    // 刨除当前格子
-                while (basePos.gridX >= 0 && cellCount > 0)
-                {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp.GetItemType() != Item.ItemType.TriggerItem && !triggerItems.Contains(tmp))
-                        triggerItems.Add(tmp);
-                    basePos.gridX--;
-                    cellCount--;
-                }
-                break;
-            case InventoryItem.Direction.RIGHT:
-                foreach (var pos in inventoryItem.currentLayOnGrid)
-                {
-                    if (pos.gridPos.gridX > basePos.gridX)
-                        basePos = pos.gridPos;
-                }
-                basePos.gridX++;    // 刨除当前格子
-                while (basePos.gridX < InventoryManager.Instance.GetGridWidth() && cellCount > 0)
-                {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp.GetItemType() != Item.ItemType.TriggerItem && !triggerItems.Contains(tmp))
-                        triggerItems.Add(tmp);
-                    basePos.gridX++;
-                    cellCount--;
-                }
+            case Trigger.TriggerType.ByFireTimes:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
-        return null;
+    }
+    public void TriggerItems()
+    {
+        // 触发器的触发逻辑
+        foreach (var item in items)
+        {
+            item.UseItem();
+        }
     }
 }

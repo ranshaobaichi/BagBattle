@@ -22,19 +22,67 @@ public class PlayerController : MonoBehaviour
 
     [Header("组件")]
     private static Rigidbody2D rb;
+    private BulletSpawner bulletSpawner;
 
+    [Header("Trigger&Item")]
+    private HashSet<TriggerItem> triggerItems = new(); // 角色拥有的触发器
+    private HashSet<Item> items = new(); // 角色拥有的物品
     private int face;
     #endregion
 
     #region 对外接口
+    public void AddTriggerItem(InventoryTriggerItem item)
+    {
+        TriggerItem tmpTriggerItem = new();
+        tmpTriggerItem.Initialize(item.triggerItemAttribute, item.triggerItems);
+        triggerItems.Add(tmpTriggerItem);
+    }
     public void Dead() { live = false; rb.velocity = Vector2.zero; gameObject.SetActive(false); }
     public bool Live() { return live; }
+    public void SetActive(bool active)
+    {
+        gameObject.SetActive(active);
+        if (active == true)
+        {
+            live = true;
+            rb.velocity = Vector2.zero;
+        }
+    }
     #endregion
 
     #region 角色控制
+    private void OnEnable()
+    {
+        transform.position = new Vector3(0, 0, 0);
+        rb.velocity = Vector2.zero;
+        live = true;
+        invincible_flag = false;
+        invincible_timer = 0.0f;
+        face = 0;
+        foreach (var item in triggerItems)
+        {
+            item.StartTrigger();
+        }
+        bulletSpawner.StartFire();
+    }
+
+    private void OnDisable()
+    {
+        foreach (var item in triggerItems)
+        {
+            item.StopTrigger();
+        }
+        rb.velocity = Vector2.zero;
+        live = false;
+        invincible_flag = false;
+        invincible_timer = 0.0f;
+        face = 0;
+        bulletSpawner.EndFire();
+    }
 
     private void Awake()
     {
+        DontDestroyOnLoad(gameObject);
         if (Instance == null)
         {
             Instance = this;
@@ -50,6 +98,7 @@ public class PlayerController : MonoBehaviour
         invincible_timer = 0.0f;
         face = 0;
         rb = GetComponent<Rigidbody2D>();
+        bulletSpawner = transform.GetComponent<BulletSpawner>();
     }
 
     private void Update()

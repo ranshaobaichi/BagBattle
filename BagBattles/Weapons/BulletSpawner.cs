@@ -13,14 +13,20 @@ public class BulletSpawner : MonoBehaviour
     //子弹发射器
     [Header("枪械设置")]
     [Tooltip("子弹攻击速度")] public float attackSpeed;
+    [Tooltip("子弹装载速度")] public float loadSpeed;
     [Tooltip("子弹攻击范围")] public float attackRange;
-    public int init_count; //初始发射子弹数量
-    private bool attackFlag;    //是否进行自动攻击
+    [Tooltip("初始发射普通子弹数量")]public int init_count;
+    [SerializeField] private bool attackFlag;    //是否进行自动攻击
     private readonly LinkedList<EnemyController> enemyInRange = new();
     private readonly Queue<Bullet.BulletType> bullets = new();
 
+    private bool isOnFire = false;  // 用来判断是否脚本被启动
+    private bool isFiring = false; // 用来判断Fire协程是否正在运行
     public UnityEvent fireEvent;    //发射事件
     #endregion
+
+    // 添加锁对象
+    private readonly object bulletQueueLock = new object();
 
     private void Awake()
     {
@@ -30,16 +36,25 @@ public class BulletSpawner : MonoBehaviour
             Destroy(gameObject);
     }
 
-    void Start()
+    public void StartFire()
     {
         attackFlag = true;
+        isOnFire = true;
         StartCoroutine(DectEnemyInRange());
-        InvokeRepeating(nameof(LoadBullet), attackSpeed, attackSpeed);
+        StartCoroutine(LoadBullet());
     }
 
-    void Update()
+    public void EndFire()
     {
-        //如果角色死亡或时间到，直接返回
+        attackFlag = false;
+        isOnFire = false;
+        enemyInRange.Clear();
+        bullets.Clear();
+        StopAllCoroutines();
+    }
+
+    void FixedUpdate()
+    {
         if (PlayerController.Instance.Live() == false || TimeController.Instance.TimeUp())
         {
             attackFlag = false;
@@ -47,17 +62,26 @@ public class BulletSpawner : MonoBehaviour
             bullets.Clear();
             return;
         }
-        if(attackFlag && enemyInRange.Count != 0 && bullets.Count != 0)
+        if (attackFlag && enemyInRange.Count != 0 && bullets.Count != 0 && isOnFire && !isFiring)
         {
             StartCoroutine(Fire());
+            isFiring = false; // 设置为false，避免重复调用
         }
     }
 
-    public void LoadBullet()
+    // 修改 LoadBullet 协程
+    public IEnumerator LoadBullet()
     {
-        for (int i = 0; i < init_count; i++)
+        while (isOnFire)
         {
-            bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+            yield return new WaitForSeconds(loadSpeed);
+            lock (bulletQueueLock)
+            {
+                for (int i = 0; i < init_count; i++)
+                {
+                    bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
+                }
+            }
         }
     }
     public void LoadBullet(Bullet.BulletType bulletType, int count)
@@ -69,62 +93,35 @@ public class BulletSpawner : MonoBehaviour
             bullets.Enqueue(bulletType);
         }
     }
+    //将发射标志设置为false，延迟time后再设置为true
     public IEnumerator SetFireFlagFalse(float time)
     {
+        if (!isOnFire)
+            yield break;
         yield return new WaitForSeconds(time);
         attackFlag = true;
+        isFiring = false; // 设置为false，允许下一次发射
     }
 
-    // public void Fire()
-    // {
-    //     var node = enemyInRange.First;
-    //     int cnt = 0; //发射数量
-
-    //     while (cnt < count && node != null)  // 添加了node != null检查，防止无限循环
-    //     {
-    //         EnemyController target = null;
-    //         while (node != null)
-    //         {
-    //             target = node.Value;
-    //             var temp = node;
-    //             node = node.Next;
-    //             if (target == null || !target.Live())
-    //             {
-    //                 enemyInRange.Remove(temp);
-    //                 target = null;
-    //             }
-    //             else
-    //                 break;
-    //         }
-
-    //         if (target != null)
-    //         {
-    //             GameObject bulletPrefab = LoadBulletPrefab(bulletType);
-    //             if (bulletPrefab == null)
-    //             {
-    //                 Debug.LogError("子弹预设体" + bulletType + "加载失败");
-    //                 return false;
-    //             }
-    //             GameObject bullet = ObjectPool.Instance.GetObject(bulletPrefab);
-    //             bullet.transform.position = transform.position;
-    //             bullet.GetComponent<Bullet>().SetSpeed((target.transform.position - transform.position).normalized);
-    //             cnt++;
-    //         }
-    //         else
-    //         {
-    //             // 没有更多有效目标，退出循环
-    //             break;
-    //         }
-    //     }
-
-    //     return cnt != 0;
-    // }
-
     //将bullets队列中的子弹发射出去
+    // 修改 Fire 协程
     public IEnumerator Fire()
     {
-        if (!attackFlag || bullets.Count == 0 || enemyInRange.Count == 0)
+        if (!attackFlag || enemyInRange.Count == 0 || !isOnFire)
             yield break;
+            
+        Queue<Bullet.BulletType> copy_bullets;
+        
+        // 原子操作：检查并复制子弹队列
+        lock (bulletQueueLock)
+        {
+            if (bullets.Count == 0)
+                yield break;
+                
+            copy_bullets = new Queue<Bullet.BulletType>(bullets);
+            bullets.Clear();
+        }
+        
         int cnt = 0; //发射数量
 
         //存储有效敌人
@@ -136,11 +133,6 @@ public class BulletSpawner : MonoBehaviour
                 enemies.AddLast(temp_node.Value.transform);
             temp_node = temp_node.Next;
         }
-
-        //存储子弹类型
-        Queue<Bullet.BulletType> copy_bullets = new(bullets);
-        bullets.Clear();
-
 
         var node = enemies.First; // 获取第一个敌人
         while (copy_bullets.Count != 0)
@@ -176,6 +168,7 @@ public class BulletSpawner : MonoBehaviour
             yield return new WaitForSeconds(0.05f); // 等待0.05秒
         }
 
+        Debug.Log("发射数量：" + cnt);
         StartCoroutine(SetFireFlagFalse(attackSpeed));
         fireEvent.Invoke();
     }
@@ -184,7 +177,7 @@ public class BulletSpawner : MonoBehaviour
     {
         while (PlayerController.Instance == null || TimeController.Instance == null)
             yield return null;
-        while (PlayerController.Instance.Live() && !TimeController.Instance.TimeUp())
+        while (PlayerController.Instance.Live() && !TimeController.Instance.TimeUp() && isOnFire)
         {
             // Wait for a short time before checking again
             yield return new WaitForSeconds(.5f);

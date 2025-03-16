@@ -31,14 +31,14 @@ public class InventoryManager : MonoBehaviour
     public int rows; // 网格行数
     public int columns; // 网格列数
     // private List<List<GridCell>> gridCells;
-    private List<InventoryItem> existItem = new();
     private Dictionary<GridPos, GridCell> gridCells = new();// 网格字典
-    private List<TriggerItem> triggerItems = new(); // 触发器列表
+    private List<InventoryTriggerItem> triggerItems = new(); // 触发器列表
 
+    #region 对外接口
     public Item GetItemOnGridcell(GridPos pos) => gridCells[pos].itemOnGrid; // 获取格子上的物品类型
     public int GetGridHeight() => rows; // 修正以获取网格高度
     public int GetGridWidth() => columns; // 修正以获取网格宽度
-    public void AddTriggerItem(TriggerItem item) => triggerItems.Add(item); // 添加触发器
+    public void AddTriggerItem(InventoryTriggerItem item) => triggerItems.Add(item); // 添加触发器
     public void TriggerTriggerItem()
     {
         foreach (var item in triggerItems)
@@ -46,6 +46,12 @@ public class InventoryManager : MonoBehaviour
             item.DetectItems();
         }
     }
+    public void AddTriggerItemToPlayer()
+    {
+        foreach (var item in triggerItems)
+            PlayerController.Instance.AddTriggerItem(item);
+    }
+    #endregion
 
     private void Awake()
     {

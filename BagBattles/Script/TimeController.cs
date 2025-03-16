@@ -30,16 +30,19 @@ public class TimeController : MonoBehaviour
     void Update()
     {
         if (current_time <= 0f)
-        {
-            PlayerController.Instance.Dead();
-            timeUP = true;
-            StartCoroutine(ChooseUI());
-        }
+            TimeUpEvent();
         else
         {
             current_time -= Time.deltaTime;
             T.text = ((int)current_time).ToString();
         }
+    }
+    [ContextMenu("TimeUp")]
+    public void TimeUpEvent()
+    {
+        timeUP = true;
+        PlayerController.Instance.Dead();
+        StartCoroutine(ChooseUI());
     }
     private IEnumerator ChooseUI()
     {
