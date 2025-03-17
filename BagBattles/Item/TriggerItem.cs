@@ -7,10 +7,11 @@ public class TriggerItem : MonoBehaviour
 {
     [Header("触发器类道具")]
     private Trigger.BaseTriggerAttribute triggerItemAttribute;
+    private Trigger.TriggerType triggerType; // 触发器类型
     private HashSet<Item> items = new();    // 触发器可触发的物品
-    public void Initialize(Trigger.BaseTriggerAttribute type, Dictionary<Item.ItemType, List<object>> triggerItem)
+    public void Initialize(object attr, Dictionary<Item.ItemType, List<object>> triggerItem, Trigger.TriggerType triggerType)
     {
-        triggerItemAttribute = type;
+        this.triggerType = triggerType;
         foreach (var (itemKey, itemValue) in triggerItem)
             switch (itemKey)
             {
@@ -28,10 +29,12 @@ public class TriggerItem : MonoBehaviour
                     Debug.LogError("FoodItem触发器未实现");
                     break;
                 default:
+                    Debug.LogError($"触发器不支持的物品类型：{itemKey}");
                     throw new ArgumentOutOfRangeException();
             }
     }
 
+    // BUG: 触发器的属性未能工作
     public void StartTrigger()
     {
         Debug.Log("触发器开始工作");
@@ -42,17 +45,6 @@ public class TriggerItem : MonoBehaviour
                 if (triggerItemAttribute is Trigger.TimeTriggerAttribute timeAttr)
                 {
                     InvokeRepeating(nameof(TriggerItems), timeAttr.triggerTime, timeAttr.triggerTime);
-                    
-                    // 如果设置了持续时间，安排停止触发
-                    if (timeAttr.duration > 0)
-                    {
-                        Invoke(nameof(StopTrigger), timeAttr.duration);
-                    }
-                }
-                else if (triggerItemAttribute is Trigger.TriggerItemAttribute legacyAttr)
-                {
-                    // 兼容旧代码
-                    InvokeRepeating(nameof(TriggerItems), legacyAttr.triggerTime, legacyAttr.triggerTime);
                 }
                 break;
             case Trigger.TriggerType.ByFireTimes:
@@ -84,4 +76,11 @@ public class TriggerItem : MonoBehaviour
             item.UseItem();
         }
     }
+
+    // public override void UseItem()
+    // {
+    //     // 触发器的使用逻辑
+    //     StartTrigger();
+    // }
+    // public override object GetItemAttribute() => triggerItemAttribute;
 }

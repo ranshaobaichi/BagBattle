@@ -33,8 +33,9 @@ public class PlayerController : MonoBehaviour
     #region 对外接口
     public void AddTriggerItem(InventoryTriggerItem item)
     {
-        TriggerItem tmpTriggerItem = new();
-        tmpTriggerItem.Initialize(item.triggerItemAttribute, item.triggerItems);
+        TriggerItem tmpTriggerItem = gameObject.AddComponent<TriggerItem>();
+        Trigger.TriggerType type = ((Trigger.BaseTriggerAttribute)item.GetAttribute()).triggerType;
+        tmpTriggerItem.Initialize(item.GetAttribute(), item.triggerItems, type);
         triggerItems.Add(tmpTriggerItem);
     }
     public void Dead() { live = false; rb.velocity = Vector2.zero; gameObject.SetActive(false); }
@@ -61,6 +62,7 @@ public class PlayerController : MonoBehaviour
         face = 0;
         foreach (var item in triggerItems)
         {
+            Debug.Log("player trigger item: " + item.GetType());
             item.StartTrigger();
         }
         bulletSpawner.StartFire();

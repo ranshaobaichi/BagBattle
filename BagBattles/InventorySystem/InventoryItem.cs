@@ -55,7 +55,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void LayOnGrid(GridCell gridCell) => currentLayOnGrid.Add(gridCell);
     public Shape GetShape() => shape;
-    public Item.ItemType GetItemType() => item.GetItemType(); // 获取物品类型
     
     [ContextMenu("Rotate")]
     public void RotateTransform()
@@ -77,7 +76,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvas.sortingOrder = 1; // 设置排序层级
     }
 
-    void Start()
+    void OnEnable()
     {
         // 这里可以根据需要初始化物品的名称和图标
         // SetItemDetails(itemType);
@@ -145,8 +144,9 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvasGroup.alpha = 1f; // 恢复物品透明度
         canvasGroup.blocksRaycasts = true; // 恢复物品的交互
 
+        var target = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells);
         // 如果没有放置在格子上，返回原位置
-        if (!inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells))
+        if (target == null || target.Count == 0)
         {
             transform.SetParent(previousParent); // 恢复物品的父物体
             rectTransform.anchoredPosition = Vector2.zero; // 恢复物品的位置
@@ -157,6 +157,18 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 currentLayOnGrid.Add(gridCell);
                 gridCell.SetCanPlaceItem(false);
                 gridCell.itemOnGrid = item; // 恢复格子物品类型
+            }
+        }
+        else
+        {
+            foreach (var cell in target)
+            {
+                Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
+                // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
+                InventoryManager.Instance.gridCells[cell].SetCanPlaceItem(false);
+                currentLayOnGrid.Add(InventoryManager.Instance.gridCells[cell]);
+                // 将物品绑定格子
+                InventoryManager.Instance.gridCells[cell].itemOnGrid = item; // 恢复格子物品类型
             }
         }
 

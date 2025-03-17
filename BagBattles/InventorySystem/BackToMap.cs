@@ -7,6 +7,5 @@ public class BackToMap : MonoBehaviour
         SceneManager.LoadScene("Map");
         InventorySystem.Instance.SetActive(false);
         InventoryManager.Instance.TriggerTriggerItem();
-        InventoryManager.Instance.AddTriggerItemToPlayer();
     }
 }

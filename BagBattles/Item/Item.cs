@@ -7,6 +7,7 @@ public abstract class Item : MonoBehaviour
     public enum ItemType
     {
         None,
+        TriggerItem,
         BulletItem,
         FoodItem,
         // Add other item types here
@@ -22,5 +23,5 @@ public abstract class Item : MonoBehaviour
     [Tooltip("道具类型")] public ItemType itemType;
     public abstract void UseItem();
     public ItemType GetItemType() => itemType;
-    public abstract object GetItemAttribute();
+    public abstract object GetAttribute();
 }

@@ -31,25 +31,41 @@ public class InventoryManager : MonoBehaviour
     public int rows; // 网格行数
     public int columns; // 网格列数
     // private List<List<GridCell>> gridCells;
-    private Dictionary<GridPos, GridCell> gridCells = new();// 网格字典
-    private List<InventoryTriggerItem> triggerItems = new(); // 触发器列表
-
+    public Dictionary<GridPos, GridCell> gridCells = new();// 网格字典
     #region 对外接口
+
     public Item GetItemOnGridcell(GridPos pos) => gridCells[pos].itemOnGrid; // 获取格子上的物品类型
     public int GetGridHeight() => rows; // 修正以获取网格高度
     public int GetGridWidth() => columns; // 修正以获取网格宽度
-    public void AddTriggerItem(InventoryTriggerItem item) => triggerItems.Add(item); // 添加触发器
+
+    // 获取触发器及其可触发的物体
+    // 并将触发器添加到角色
     public void TriggerTriggerItem()
     {
-        foreach (var item in triggerItems)
+        foreach (var cell in gridCells.Values)
         {
-            item.DetectItems();
+            if (cell.itemOnGrid != null && cell.itemOnGrid.GetItemType() == Item.ItemType.TriggerItem)
+            {
+                var triggerItem = cell.itemOnGrid as InventoryTriggerItem;
+                // 检查必要的组件和属性是否存在
+                if (triggerItem.inventoryItem == null)
+                {
+                    Debug.LogWarning($"触发器 {triggerItem.name} 的 inventoryItem 为空");
+                    continue;
+                }
+                
+                if (triggerItem.GetAttribute() == null)
+                {
+                    Debug.LogWarning($"触发器 {triggerItem.name} 的 triggerItemAttribute 为空");
+                    continue;
+                }
+                
+                var shape = triggerItem.inventoryItem.GetShape();
+                Debug.Log($"触发器：{triggerItem.name}，当前方向：{shape.itemDirection}，触发格数：{((Trigger.BaseTriggerAttribute)triggerItem.GetAttribute()).triggerRange}");
+                triggerItem.DetectItems();
+                PlayerController.Instance.AddTriggerItem(triggerItem);
+            }
         }
-    }
-    public void AddTriggerItemToPlayer()
-    {
-        foreach (var item in triggerItems)
-            PlayerController.Instance.AddTriggerItem(item);
     }
     #endregion
 
@@ -61,7 +77,7 @@ public class InventoryManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    void Start()
+    void OnEnable()
     {
         GridPos.rows = rows;
         GridPos.columns = columns;
@@ -97,7 +113,7 @@ public class InventoryManager : MonoBehaviour
     }
 
     // 尝试将物品放入格子中
-    public bool TryPlaceItemInGrid(InventoryItem item, List<GridCell> targetCells)
+    public List<GridPos> TryPlaceItemInGrid(InventoryItem item, List<GridCell> targetCells)
     {
         var mousePos = GetCellIndex(Input.mousePosition);
         //put on the blank area
@@ -105,26 +121,18 @@ public class InventoryManager : MonoBehaviour
         {
             item.transform.SetParent(InventorySystem.transform);
             // Debug.Log("put on blank");
-            return true;
+            return null;
         }
 
         List<GridPos> target = PlaceItem(mousePos, item.GetShape(), targetCells);
         if (target != null && target.Count != 0)
         {
-            foreach (var cell in target)
-            {
-                // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
-                gridCells[cell].SetCanPlaceItem(false);
-                gridCells[cell].itemOnGrid = item.item; // 设置格子物品类型
-                item.LayOnGrid(gridCells[cell]);
-            }
             item.transform.SetParent(gridCells[target[0]].transform);
             item.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            // item.transform.position = targetCells[0].transform.position;
-            return true;
+            return target;
         }
 
-        return false;
+        return null;
     }
 
     private List<GridPos> PlaceItem(GridPos mousePos, InventoryItem.Shape Shape, List<GridCell> targetCells)

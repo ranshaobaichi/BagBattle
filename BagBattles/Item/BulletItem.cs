@@ -10,5 +10,5 @@ public class BulletItem : Item
     {
         BulletSpawner.Instance.LoadBullet(bulletAttribute.bulletType, bulletAttribute.bulletCount);
     }
-    public override object GetItemAttribute() => bulletAttribute;
+    public override object GetAttribute() => bulletAttribute;
 }
