@@ -9,6 +9,12 @@ public class Trigger
     {
         [Tooltip("单格")] SingleCell,
         [Tooltip("双格")] DoubleCell,
+        [Tooltip("三格")] TripleCell,
+        [Tooltip("整行")] FullRow,
+        [Tooltip("四直线单格")] FourStraightSingleCell,
+        // [Tooltip("四斜线单格")] FourBiasSingleCell,
+        [Tooltip("九宫格")] NineGrid,
+        [Tooltip("十字")] Cross,   
     }
 
     [Serializable]
@@ -44,7 +50,7 @@ public class Trigger
     public class FireCountTriggerAttribute : BaseTriggerAttribute
     {
         [Tooltip("触发所需的开火次数")]
-        public int triggerFireCount = 3;
+        public int fireCount = 3;
         public FireCountTriggerAttribute() : base(TriggerType.ByFireTimes) { }
     }
     

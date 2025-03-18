@@ -17,8 +17,8 @@ public class BulletSpawner : MonoBehaviour
     [Tooltip("子弹攻击范围")] public float attackRange;
     [Tooltip("初始发射普通子弹数量")]public int init_count;
     [SerializeField] private bool attackFlag;    //是否进行自动攻击
-    private readonly LinkedList<EnemyController> enemyInRange = new();
-    private readonly Queue<Bullet.BulletType> bullets = new();
+    private readonly LinkedList<EnemyController> enemyInRange = new(); // 用来存储范围内的敌人
+    private readonly Queue<Bullet.BulletType> bullets = new();  // 用来存储子弹的队列
 
     private bool isOnFire = false;  // 用来判断是否脚本被启动
     private bool isFiring = false; // 用来判断Fire协程是否正在运行
@@ -38,6 +38,7 @@ public class BulletSpawner : MonoBehaviour
 
     public void StartFire()
     {
+        Debug.Log("开始发射");
         attackFlag = true;
         isOnFire = true;
         StartCoroutine(DectEnemyInRange());
@@ -77,6 +78,7 @@ public class BulletSpawner : MonoBehaviour
             yield return new WaitForSeconds(loadSpeed);
             lock (bulletQueueLock)
             {
+                Debug.Log("加载初始子弹");
                 for (int i = 0; i < init_count; i++)
                 {
                     bullets.Enqueue(Bullet.BulletType.Normal_Bullet);
@@ -86,11 +88,13 @@ public class BulletSpawner : MonoBehaviour
     }
     public void LoadBullet(Bullet.BulletType bulletType, int count)
     {
-        if (count == -1)
-            count = init_count;
         for (int i = 0; i < count; i++)
         {
-            bullets.Enqueue(bulletType);
+            Debug.Log("LoadBullet: " + bulletType);
+            lock (bulletQueueLock)
+            {
+                bullets.Enqueue(bulletType);
+            }
         }
     }
     //将发射标志设置为false，延迟time后再设置为true

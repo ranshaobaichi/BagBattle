@@ -1,9 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.Callbacks;
 using UnityEngine;
-using UnityEngine.UI;
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController Instance = null;
@@ -11,7 +7,6 @@ public class PlayerController : MonoBehaviour
     [Header("基础属性")]
     [Tooltip("角色移动速度")] public float speed;
     [Tooltip("受击无敌时间")] public float invincible_time;
-
 
     [Header("属性标志位")]
     private static bool live;
@@ -25,18 +20,36 @@ public class PlayerController : MonoBehaviour
     private BulletSpawner bulletSpawner;
 
     [Header("Trigger&Item")]
-    private HashSet<TriggerItem> triggerItems = new(); // 角色拥有的触发器
-    private HashSet<Item> items = new(); // 角色拥有的物品
+    private List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
+    private List<Item> items = new List<Item>(); // 角色拥有的物品
     private int face;
     #endregion
 
     #region 对外接口
-    public void AddTriggerItem(InventoryTriggerItem item)
+    public void AddTriggerItem(InventoryTriggerItem item, Trigger.TriggerType type)
     {
-        TriggerItem tmpTriggerItem = gameObject.AddComponent<TriggerItem>();
-        Trigger.TriggerType type = ((Trigger.BaseTriggerAttribute)item.GetAttribute()).triggerType;
-        tmpTriggerItem.Initialize(item.GetAttribute(), item.triggerItems, type);
-        triggerItems.Add(tmpTriggerItem);
+        switch (type)
+        {
+            case Trigger.TriggerType.ByTime:
+                TimeTriggerItem timeTriggerItem = gameObject.AddComponent<TimeTriggerItem>();
+                if (timeTriggerItem != null)
+                {
+                    triggerItems.Add(timeTriggerItem);
+                    timeTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                }
+                break;
+            case Trigger.TriggerType.ByFireTimes:
+                FireTriggerItem fireTriggerItem = gameObject.AddComponent<FireTriggerItem>();
+                if (fireTriggerItem != null)
+                {
+                    triggerItems.Add(fireTriggerItem);
+                    fireTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                }
+                break;
+            default:
+                Debug.LogError($"触发器类型{type}不支持");
+                break;
+        }
     }
     public void Dead() { live = false; rb.velocity = Vector2.zero; gameObject.SetActive(false); }
     public bool Live() { return live; }
@@ -70,10 +83,6 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
-        foreach (var item in triggerItems)
-        {
-            item.StopTrigger();
-        }
         rb.velocity = Vector2.zero;
         live = false;
         invincible_flag = false;
@@ -116,7 +125,7 @@ public class PlayerController : MonoBehaviour
         Quaternion flip = transform.rotation;
         if (move.x != 0)
         {
-            flip.y = rb.velocity.x < 0 ? 180 : 0;
+            flip.y = rb.velocity.x > 0 ? 180 : 0;
             face = (int)flip.y;
         }
         else
@@ -153,31 +162,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    protected void OnCollisionEnter2D(Collision2D collision)
+    public void DestroyAllTriggers()
     {
-        if (invincible_flag == true)
-            return;
-        // if (collision.gameObject.CompareTag("Enemy"))
-        // {
-        //     EnemyController enemy = collision.gameObject.GetComponent<EnemyController>();
-        //     if (enemy.CanAttack() == true)
-        //     {
-        //         //Debug.Log("damage");
-        //         HeartController.TakeDamage((int)collision.gameObject.GetComponent<EnemyController>().attack_damage);
-        //         invincible_flag = true;
-        //     }
-        // }
-    }
-
-    protected void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (invincible_flag == true)
-            return;
-        // if (collision.gameObject.CompareTag("Enemy_Bullet"))
-        // {
-        //     invincible_flag = true;
-        //     HeartController.TakeDamage((int)collision.gameObject.GetComponent<Bullet>().GetDamage());
-        // }
+        foreach (var item in triggerItems)
+            item.Destroy();
+        triggerItems.Clear();
     }
     #endregion
 }

@@ -78,6 +78,13 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     void OnEnable()
     {
+        if(item == null)
+            item = GetComponent<Item>();
+        if (item == null)
+        {
+            Debug.LogError("物品脚本未找到，请确保物体上有Item组件");
+            return;
+        }
         // 这里可以根据需要初始化物品的名称和图标
         // SetItemDetails(itemType);
         foreach (Transform child in transform)
@@ -144,35 +151,56 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         canvasGroup.alpha = 1f; // 恢复物品透明度
         canvasGroup.blocksRaycasts = true; // 恢复物品的交互
 
-        var target = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells);
-        // 如果没有放置在格子上，返回原位置
-        if (target == null || target.Count == 0)
+        List<InventoryManager.GridPos> target = new List<InventoryManager.GridPos>();
+        var ret = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells, target);
+    TRYAGAIN:
+        switch (ret)
         {
-            transform.SetParent(previousParent); // 恢复物品的父物体
-            rectTransform.anchoredPosition = Vector2.zero; // 恢复物品的位置
-            rectTransform.position = originalPosition;
-            //原位置回放
-            foreach (GridCell gridCell in previousLayOnGrid)
-            {
-                currentLayOnGrid.Add(gridCell);
-                gridCell.SetCanPlaceItem(false);
-                gridCell.itemOnGrid = item; // 恢复格子物品类型
-            }
+            case -2:
+                Debug.LogError("放置target未初始化，尝试重新放置");
+                target.Clear();
+                target = new List<InventoryManager.GridPos>();
+                ret = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells, target);
+                goto TRYAGAIN;
+            case -1:
+                Debug.Log("放置失败，放到空白区域");
+                currentLayOnGrid.Clear();
+                break;
+            case 0:
+                Debug.Log("放置失败，放到已被占据的格子上");
+                transform.SetParent(previousParent); // 恢复物品的父物体
+                rectTransform.anchoredPosition = Vector2.zero; // 恢复物品的位置
+                rectTransform.position = originalPosition;
+                //原位置回放
+                foreach (GridCell gridCell in previousLayOnGrid)
+                {
+                    currentLayOnGrid.Add(gridCell);
+                    gridCell.SetCanPlaceItem(false);
+                    gridCell.itemOnGrid = item; // 恢复格子物品类型
+                }
+                break;
+            case 1:
+                Debug.Log("放置成功");
+                if(target.Count == 0)
+                {
+                    Debug.LogError("放置成功，但target为空");
+                    return;
+                }
+                foreach (var cell in target)
+                {
+                    Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
+                    // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
+                    InventoryManager.Instance.gridCells[cell].SetCanPlaceItem(false);
+                    currentLayOnGrid.Add(InventoryManager.Instance.gridCells[cell]);
+                    InventoryManager.Instance.gridCells[cell].itemOnGrid = item; // 恢复格子物品类型
+                }
+                break;
+            default:
+                Debug.LogError("放置产生未知错误");
+                return;
         }
-        else
-        {
-            foreach (var cell in target)
-            {
-                Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
-                // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
-                InventoryManager.Instance.gridCells[cell].SetCanPlaceItem(false);
-                currentLayOnGrid.Add(InventoryManager.Instance.gridCells[cell]);
-                // 将物品绑定格子
-                InventoryManager.Instance.gridCells[cell].itemOnGrid = item; // 恢复格子物品类型
-            }
-        }
-
-        previousLayOnGrid.Clear(); // 清空上次检测的格子
+        previousParent = null; // 清空上次放置的父物体
+        previousLayOnGrid.Clear(); // 清空上次占据的格子
         foreach (var cell in previousHoveredCells)
             cell.SetNormal();
         previousHoveredCells.Clear();

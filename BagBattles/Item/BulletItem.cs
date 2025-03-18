@@ -8,6 +8,7 @@ public class BulletItem : Item
     public BulletItemAttribute bulletAttribute;
     public override void UseItem()
     {
+        Debug.Log("子弹道具使用");
         BulletSpawner.Instance.LoadBullet(bulletAttribute.bulletType, bulletAttribute.bulletCount);
     }
     public override object GetAttribute() => bulletAttribute;

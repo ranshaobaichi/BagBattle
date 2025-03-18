@@ -108,7 +108,6 @@ public class EnemyController : MonoBehaviour
         if (invincible_flag == false && live)
         {
             // if (invincible_time != 0) invincible_flag = true;
-
             currentHP -= damage;
             if (currentHP <= 0f)
             {

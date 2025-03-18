@@ -6,6 +6,10 @@ public class CameraController : MonoBehaviour
 {
     public GameObject player;
     public uint cam_height = 10;
+    void Start()
+    {
+        player = GameObject.FindGameObjectWithTag("Player");
+    }
     private void LateUpdate()
     {
         if (player != null)
