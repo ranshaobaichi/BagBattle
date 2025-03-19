@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
@@ -20,75 +21,101 @@ public class PlayerController : MonoBehaviour
     private BulletSpawner bulletSpawner;
 
     [Header("Trigger&Item")]
-    private List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
-    private List<Item> items = new List<Item>(); // 角色拥有的物品
+    [SerializeField] private List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
+    public GameObject triggerGameObject; //承载触发器子物体
+    // private List<Item> items = new(); // 角色拥有的物品
     private int face;
     #endregion
 
+    #region 属性加成
+    private float permanent_speed_bonus;
+    private LinkedList<Food.Bonus> temporary_speed_bonus = new();
+    #endregion
+
     #region 对外接口
-    public void AddTriggerItem(InventoryTriggerItem item, Trigger.TriggerType type)
+    public void AddTriggerItem(TriggerInventoryItem item, Trigger.TriggerType type)
     {
         switch (type)
         {
             case Trigger.TriggerType.ByTime:
-                TimeTriggerItem timeTriggerItem = gameObject.AddComponent<TimeTriggerItem>();
-                if (timeTriggerItem != null)
-                {
-                    triggerItems.Add(timeTriggerItem);
-                    timeTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
-                }
+                TimeTriggerItem timeTriggerItem = triggerGameObject.AddComponent<TimeTriggerItem>();
+                timeTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                triggerItems.Add(timeTriggerItem);
                 break;
             case Trigger.TriggerType.ByFireTimes:
-                FireTriggerItem fireTriggerItem = gameObject.AddComponent<FireTriggerItem>();
-                if (fireTriggerItem != null)
-                {
-                    triggerItems.Add(fireTriggerItem);
-                    fireTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
-                }
+                FireTriggerItem fireTriggerItem = triggerGameObject.AddComponent<FireTriggerItem>();
+                fireTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                triggerItems.Add(fireTriggerItem);
                 break;
             default:
                 Debug.LogError($"触发器类型{type}不支持");
                 break;
         }
     }
-    public void Dead() { live = false; rb.velocity = Vector2.zero; gameObject.SetActive(false); }
-    public bool Live() { return live; }
-    public void SetActive(bool active)
+    public void Dead()
     {
-        gameObject.SetActive(active);
-        if (active == true)
-        {
-            live = true;
-            rb.velocity = Vector2.zero;
-        }
+        live = false;
+        gameObject.SetActive(false);
+        StopAllCoroutines();
     }
+    public void FinishRound()
+    {
+        live = false;
+        gameObject.SetActive(false);
+        StopAllCoroutines();
+    }
+    public bool Live() => live; // 角色是否存活
+    public void SetActive(bool active) => gameObject.SetActive(active); // 设置角色是否激活
     #endregion
 
     #region 角色控制
     private void OnEnable()
     {
+        // 角色位置恢复
         transform.position = new Vector3(0, 0, 0);
         rb.velocity = Vector2.zero;
         live = true;
         invincible_flag = false;
         invincible_timer = 0.0f;
         face = 0;
+
+        // 启动触发器
         foreach (var item in triggerItems)
         {
             Debug.Log("player trigger item: " + item.GetType());
             item.StartTrigger();
         }
+
+        // 启动枪械模组
         bulletSpawner.StartFire();
+
+        // 角色获得临时加成
+        speed += temporary_speed_bonus.Sum(x => x.bonusValue);
     }
 
     private void OnDisable()
     {
+        // 禁用角色
         rb.velocity = Vector2.zero;
         live = false;
         invincible_flag = false;
         invincible_timer = 0.0f;
         face = 0;
+
+        // 结束枪械模组
         bulletSpawner.EndFire();
+        bulletSpawner.ClearTemporaryBonus();
+
+        // 结束并清除触发器
+        DestroyAllTriggers();
+        Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();
+        foreach (var item in triggerComponents)
+        {
+            Destroy(item);
+        }
+
+        // 移除临时加成
+        ClearTemporaryBonus();
     }
 
     private void Awake()
@@ -167,6 +194,25 @@ public class PlayerController : MonoBehaviour
         foreach (var item in triggerItems)
             item.Destroy();
         triggerItems.Clear();
+    }
+    #endregion
+
+    #region 属性接口
+    // 速度属性
+    public void AddPermanentSpeed(float bonus)
+    {
+        permanent_speed_bonus += bonus;
+        speed += bonus;
+    }
+    public void AddTemporarySpeed(float bonus, int round) => temporary_speed_bonus.AddLast(new Food.Bonus(bonus, round)); // 添加临时加成
+    
+    private void ClearTemporaryBonus()
+    {
+        // 清除临时加成
+        speed -= temporary_speed_bonus.Sum(x => x.bonusValue);
+
+        // 处理过期的临时加成
+        temporary_speed_bonus.DecreaseRounds();
     }
     #endregion
 }

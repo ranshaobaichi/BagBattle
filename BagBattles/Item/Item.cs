@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class Item : MonoBehaviour
+public abstract class Item
 {
     [Serializable]
     public enum ItemType
@@ -18,14 +19,20 @@ public abstract class Item : MonoBehaviour
         public int bulletCount;
         public Bullet.BulletType bulletType;
     }
-
-    [Header("道具类型")]
-    [Tooltip("道具类型")] public ItemType itemType;
-    public bool triggerDectectFlag = false; // 可否被触发器检测标志位
-
-    public abstract void UseItem();
-    public ItemType GetItemType() => itemType;
-    public abstract object GetAttribute();
-
-    protected void OnEnable() => triggerDectectFlag = true;
+    [Serializable]
+    public struct FoodItemAttribute
+    {
+        [Serializable]
+        public struct BasicFoodAttribute
+        {
+            [Tooltip("食物加成种类")] public Food.FoodBonusType foodBonusType;
+            [Tooltip("食物加成数值")] public float foodBonusValue;
+            [Tooltip("食物持续时间类型")] public Food.FoodDurationType foodDurationType;
+            [Tooltip("食物加成持续时间（回合数）")] public int roundLeft;
+        }
+        [Tooltip("食物道具名称")] public string foodName;
+        [Tooltip("食物效果配置")] public List<BasicFoodAttribute> foodItemAttributes;
+        public FoodInventoryItem foodInventoryItem;
+    }
+    public abstract void UseItem(); // 使用道具
 }

@@ -32,39 +32,67 @@ public class InventoryManager : MonoBehaviour
     public int columns; // 网格列数
     // private List<List<GridCell>> gridCells;
     public Dictionary<GridPos, GridCell> gridCells = new();// 网格字典
+    public List<TriggerInventoryItem> triggerInInventory = new(); // 仓库中触发器列表
+    public List<FoodInventoryItem> foodInInventory = new(); // 仓库中食物列表
+
     #region 对外接口
 
-    public Item GetItemOnGridcell(GridPos pos) => gridCells[pos].itemOnGrid; // 获取格子上的物品类型
     public int GetGridHeight() => rows; // 修正以获取网格高度
     public int GetGridWidth() => columns; // 修正以获取网格宽度
-
+    public InventoryItem GetItemOnGridcell(GridPos pos)
+    {
+        if (gridCells.TryGetValue(pos, out GridCell gridCell))
+        {
+            return gridCell.itemOnGrid;
+        }
+        else
+        {
+            Debug.Log($"格子超出范围：{pos.gridX} {pos.gridY}");
+            return null;
+        }
+    } // 获取格子上的物品类型
     // 获取触发器及其可触发的物体
     // 并将触发器添加到角色
     public void TriggerTriggerItem()
     {
-        HashSet<Item> items = new();
-        foreach (var cell in gridCells.Values)
+        foreach (var triggerItem in triggerInInventory)
         {
-            if (cell.itemOnGrid != null && cell.itemOnGrid.GetItemType() == Item.ItemType.TriggerItem && !items.Contains(cell.itemOnGrid))
-            {
-                var triggerItem = cell.itemOnGrid as InventoryTriggerItem;
-                // 检查必要的组件和属性是否存在
-                if (triggerItem.inventoryItem == null)
-                {
-                    Debug.LogWarning($"触发器 {triggerItem.name} 的 inventoryItem 为空");
-                    continue;
-                }
-                if (triggerItem.GetAttribute() == null)
-                {
-                    Debug.LogWarning($"触发器 {triggerItem.name} 的 triggerItemAttribute 为空");
-                    continue;
-                }
-
-                var shape = triggerItem.inventoryItem.GetShape();
-                Debug.Log($"触发器：{triggerItem.name}，当前方向：{shape.itemDirection}，触发格数：{((Trigger.BaseTriggerAttribute)triggerItem.GetAttribute()).triggerRange}");
-                triggerItem.DetectItems();
+            var shape = triggerItem.GetShape();
+            Debug.Log($"触发器当前方向：{shape.itemDirection}，触发格数：{((Trigger.BaseTriggerAttribute)triggerItem.GetAttribute()).triggerRange}");
+            if (triggerItem.DetectItems())
                 PlayerController.Instance.AddTriggerItem(triggerItem, triggerItem.GetTriggerType());
-            }
+        }
+    }
+
+    public void AddToInventory(InventoryItem item)
+    {
+        if (item is TriggerInventoryItem triggerItem)
+        {
+            triggerInInventory.Add(triggerItem);
+            Debug.Log($"添加触发器物品成功，当前数量：{triggerInInventory.Count}");
+        }
+        else if (item is FoodInventoryItem foodItem)
+        {
+            foodInInventory.Add(foodItem);
+            Debug.Log($"添加食物物品成功，当前数量：{foodInInventory.Count}");
+        }
+        else
+        {
+            Debug.LogError("添加物品失败，物品类型不支持");
+        }
+    }
+    
+    public void RemoveFoodItem(FoodInventoryItem foodItem)
+    {
+        if (foodInInventory.Contains(foodItem))
+        {
+            foodInInventory.Remove(foodItem);
+            Destroy(foodItem.gameObject); // 销毁物品对象
+            Debug.Log($"移除食物物品成功，当前数量：{foodInInventory.Count}");
+        }
+        else
+        {
+            Debug.LogError("移除食物物品失败，物品不在仓库中");
         }
     }
     #endregion

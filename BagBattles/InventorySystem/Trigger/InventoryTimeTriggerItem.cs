@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class InventoryTimeTriggerItem : InventoryTriggerItem
+public class InventoryTimeTriggerItem : TriggerInventoryItem
 {
     [Header("时间触发道具")]
     public Trigger.TimeTriggerAttribute timeTriggerAttribute;

@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Rocket : Bullet
+public class Rocket_Bullet : Bullet
 {
-    public float lerp;
+    [Header("火箭弹设置")]
+    [Tooltip("一次发射火箭弹数量")] public int num;
+    [Tooltip("偏转速度")] public float lerp;
     private Vector3 targetPos;
     private Vector3 direction;
     private bool arrived;

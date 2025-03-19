@@ -2,37 +2,36 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class InventoryTriggerItem : Item
+public abstract class TriggerInventoryItem : InventoryItem
 {
     #region 组件属性
     [Header("绑定物品")]
     // [SerializeField] public Trigger.BaseTriggerAttribute triggerItemAttribute;
-    public InventoryItem inventoryItem;
-    public Dictionary<ItemType, List<object>> triggerItems = new Dictionary<ItemType, List<object>>(); //记录该触发器可触发的物品
+    public Dictionary<Item.ItemType, List<object>> triggerItems = new Dictionary<Item.ItemType, List<object>>(); //记录该触发器可触发的物品
     #endregion
-
-    public override void UseItem() { throw new NotImplementedException(); }
     public abstract Trigger.TriggerType GetTriggerType();
 
-    private bool HasSpace(InventoryManager.GridPos gridPos, InventoryItem.Direction direction)
+    public TriggerInventoryItem() => itemType = Item.ItemType.TriggerItem;
+
+    private bool HasSpace(InventoryManager.GridPos gridPos, Direction direction)
     {
         int gridHeight = InventoryManager.Instance.GetGridHeight();
         int gridWidth = InventoryManager.Instance.GetGridWidth();
         switch (direction)
         {
-            case InventoryItem.Direction.UP:
+            case Direction.UP:
                 if (gridPos.gridY + 1 < gridHeight)
                     return true;
                 break;
-            case InventoryItem.Direction.DOWN:
+            case Direction.DOWN:
                 if (gridPos.gridY - 1 >= 0)
                     return true;
                 break;
-            case InventoryItem.Direction.LEFT:
+            case Direction.LEFT:
                 if (gridPos.gridX - 1 >= 0)
                     return true;
                 break;
-            case InventoryItem.Direction.RIGHT:
+            case Direction.RIGHT:
                 if (gridPos.gridX + 1 < gridWidth)
                     return true;
                 break;
@@ -43,30 +42,35 @@ public abstract class InventoryTriggerItem : Item
     }
 
     //TODO: 改为从哪格开始触发 触发方向 触发格数
-    public void DetectItems()
+    public bool DetectItems()
     {
-        List<Item> ContainItems = new List<Item>(); // 触发器检测到的物品
+        if (currentLayOnGrid == null || currentLayOnGrid.Count == 0)
+        {
+            Debug.LogError("触发器未放置在格子上");
+            return false;
+        }
+        List<InventoryItem> ContainItems = new List<InventoryItem>(); // 触发器检测到的物品
         triggerItems.Clear();
         // 触发逻辑
         switch (((Trigger.BaseTriggerAttribute)GetAttribute()).triggerRange)
         {
             case Trigger.TriggerRange.SingleCell:
-                ContainItems.AddRange(DetectStraightDirection(inventoryItem.GetShape().itemDirection, 1));
+                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 1));
                 break;
             case Trigger.TriggerRange.DoubleCell:
-                ContainItems.AddRange(DetectStraightDirection(inventoryItem.GetShape().itemDirection, 2));
+                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 2));
                 break;
             case Trigger.TriggerRange.TripleCell:
-                ContainItems.AddRange(DetectStraightDirection(inventoryItem.GetShape().itemDirection, 3));
+                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 3));
                 break;
             case Trigger.TriggerRange.FullRow:
-                ContainItems.AddRange(DetectStraightDirection(inventoryItem.GetShape().itemDirection, InventoryManager.Instance.GetGridWidth() + 3));
+                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, InventoryManager.Instance.GetGridWidth() + 3));
                 break;
             case Trigger.TriggerRange.FourStraightSingleCell:
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.UP, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.DOWN, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.LEFT, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.RIGHT, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.UP, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.DOWN, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.LEFT, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.RIGHT, 1));
                 break;
             // case Trigger.TriggerRange.FourBiasSingleCell:
             //     break;
@@ -81,7 +85,7 @@ public abstract class InventoryTriggerItem : Item
         {
             if (triggerItems.ContainsKey(item.GetItemType()) == false)
                 triggerItems.Add(item.GetItemType(), new List<object>());
-            if(item.GetAttribute() != null)
+            if (item.GetAttribute() != null)
                 triggerItems[item.GetItemType()].Add(item.GetAttribute());
             else
                 Debug.LogError($"触发器检测到的物品类型{item.GetItemType()}不支持GetAttribute方法");
@@ -90,19 +94,20 @@ public abstract class InventoryTriggerItem : Item
 
         // 触发器工作完成
         Debug.Log("触发器工作完成，检测到物品数量：" + ContainItems.Count);
+        return true;
     }
 
-    private List<Item> DetectStraightDirection(InventoryItem.Direction direction, int cellCount)
+    private List<InventoryItem> DetectStraightDirection(Direction direction, int cellCount)
     {
         Debug.Log($"触发器开始工作，当前方向：{direction}，触发格数：{cellCount}");
-        InventoryManager.GridPos basePos = inventoryItem.currentLayOnGrid[0].gridPos;
-        List<Item> ContainItems = new List<Item>();
+        InventoryManager.GridPos basePos = currentLayOnGrid[0].gridPos;
+        List<InventoryItem> ContainItems = new List<InventoryItem>();
         // 处理触发方向和单元格数量的逻辑
         switch (direction)
         {
-            case InventoryItem.Direction.UP:
+            case Direction.UP:
                 // 处理向上触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
+                foreach (var pos in currentLayOnGrid)
                 {
                     if (pos.gridPos.gridY < basePos.gridY)
                         basePos = pos.gridPos;
@@ -111,9 +116,16 @@ public abstract class InventoryTriggerItem : Item
                 // 找到能触发的所有物品
                 while (basePos.gridY >= 0 && cellCount > 0)
                 {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -121,9 +133,9 @@ public abstract class InventoryTriggerItem : Item
                     cellCount--;
                 }
                 break;
-            case InventoryItem.Direction.DOWN:
+            case Direction.DOWN:
                 // 处理向下触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
+                foreach (var pos in currentLayOnGrid)
                 {
                     if (pos.gridPos.gridY > basePos.gridY)
                         basePos = pos.gridPos;
@@ -131,9 +143,16 @@ public abstract class InventoryTriggerItem : Item
                 basePos.gridY++;    // 刨除当前格子
                 while (basePos.gridY < InventoryManager.Instance.GetGridHeight() && cellCount > 0)
                 {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -141,9 +160,9 @@ public abstract class InventoryTriggerItem : Item
                     cellCount--;
                 }
                 break;
-            case InventoryItem.Direction.LEFT:
+            case Direction.LEFT:
                 // 处理向左触发
-                foreach (var pos in inventoryItem.currentLayOnGrid)
+                foreach (var pos in currentLayOnGrid)
                 {
                     if (pos.gridPos.gridX < basePos.gridX)
                         basePos = pos.gridPos;
@@ -151,9 +170,16 @@ public abstract class InventoryTriggerItem : Item
                 basePos.gridX--;    // 刨除当前格子
                 while (basePos.gridX >= 0 && cellCount > 0)
                 {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -161,8 +187,8 @@ public abstract class InventoryTriggerItem : Item
                     cellCount--;
                 }
                 break;
-            case InventoryItem.Direction.RIGHT:
-                foreach (var pos in inventoryItem.currentLayOnGrid)
+            case Direction.RIGHT:
+                foreach (var pos in currentLayOnGrid)
                 {
                     if (pos.gridPos.gridX > basePos.gridX)
                         basePos = pos.gridPos;
@@ -170,9 +196,16 @@ public abstract class InventoryTriggerItem : Item
                 basePos.gridX++;    // 刨除当前格子
                 while (basePos.gridX < InventoryManager.Instance.GetGridWidth() && cellCount > 0)
                 {
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(basePos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -187,31 +220,38 @@ public abstract class InventoryTriggerItem : Item
         return ContainItems;
     }
 
-    public List<Item> DetectSpecial(Trigger.TriggerRange triggerRange)
+    public List<InventoryItem> DetectSpecial(Trigger.TriggerRange triggerRange)
     {
         Debug.Log($"触发器开始工作，当前方向：{triggerRange}");
-        InventoryManager.GridPos basePos = inventoryItem.currentLayOnGrid[0].gridPos;
-        List<Item> ContainItems = new List<Item>();
+        InventoryManager.GridPos basePos = currentLayOnGrid[0].gridPos;
+        List<InventoryItem> ContainItems = new List<InventoryItem>();
 
         switch (triggerRange)
         {
             case Trigger.TriggerRange.NineGrid:
-                bool upFlag = HasSpace(basePos, InventoryItem.Direction.UP), 
-                    downFlag = HasSpace(basePos, InventoryItem.Direction.DOWN),
-                    leftFlag = HasSpace(basePos, InventoryItem.Direction.LEFT),
-                    rightFlag = HasSpace(basePos, InventoryItem.Direction.RIGHT);
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.UP, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.DOWN, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.LEFT, 1));
-                ContainItems.AddRange(DetectStraightDirection(InventoryItem.Direction.RIGHT, 1));
+                bool upFlag = HasSpace(basePos, Direction.UP), 
+                    downFlag = HasSpace(basePos, Direction.DOWN),
+                    leftFlag = HasSpace(basePos, Direction.LEFT),
+                    rightFlag = HasSpace(basePos, Direction.RIGHT);
+                ContainItems.AddRange(DetectStraightDirection(Direction.UP, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.DOWN, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.LEFT, 1));
+                ContainItems.AddRange(DetectStraightDirection(Direction.RIGHT, 1));
                 InventoryManager.GridPos tmpPos = basePos;
                 if (upFlag && leftFlag)
                 {
                     tmpPos.gridX = basePos.gridX - 1;
                     tmpPos.gridY = basePos.gridY - 1;
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -220,9 +260,16 @@ public abstract class InventoryTriggerItem : Item
                 {
                     tmpPos.gridX = basePos.gridX + 1;
                     tmpPos.gridY = basePos.gridY - 1;
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -231,9 +278,16 @@ public abstract class InventoryTriggerItem : Item
                 {
                     tmpPos.gridX = basePos.gridX - 1;
                     tmpPos.gridY = basePos.gridY + 1;
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }
@@ -242,9 +296,16 @@ public abstract class InventoryTriggerItem : Item
                 {
                     tmpPos.gridX = basePos.gridX + 1;
                     tmpPos.gridY = basePos.gridY + 1;
-                    Item tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
-                    if (tmp != null && tmp.GetItemType() != Item.ItemType.None && tmp.triggerDectectFlag == true)
+                    InventoryItem tmp = InventoryManager.Instance.GetItemOnGridcell(tmpPos);
+                    if (tmp != null && tmp.triggerDectectFlag == true)
                     {
+                        if (tmp.GetItemType() != Item.ItemType.None)
+                            Debug.Log($"触发器检测到物品：{tmp.GetItemType()}");
+                        else
+                        {
+                            Debug.LogError($"触发器检测到的物品类型为None");
+                            throw new ArgumentOutOfRangeException();
+                        }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
                     }

@@ -62,6 +62,7 @@ public class EnemyController : MonoBehaviour
         invincible_flag = false;
         knockback_flag = false;
         ice_flag = false;
+
         attack_timer = 0f;
         currentHP = maxHP;
         current_speed += UnityEngine.Random.Range(-speed_gap, speed_gap);
@@ -108,6 +109,7 @@ public class EnemyController : MonoBehaviour
         if (invincible_flag == false && live)
         {
             // if (invincible_time != 0) invincible_flag = true;
+            Debug.Log("enemy take damage: " + damage);
             currentHP -= damage;
             if (currentHP <= 0f)
             {
@@ -177,7 +179,6 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    //BUG:现在enmy之间没有碰撞检测
     protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (PlayerController.Instance.Live() == false)
@@ -207,8 +208,8 @@ public class EnemyController : MonoBehaviour
             ice_level++;
     }
     public bool OnIce() { return ice_flag; }
+    
     //击退
-
     // 在敌人被震退时调用该方法
     public void OnKnockback(Vector2 force)
     {
@@ -223,7 +224,7 @@ public class EnemyController : MonoBehaviour
     {
         knockback_flag = true;
         // 在震退期间，可以选择禁用其它移动逻辑
-        yield return new WaitForSeconds(.5f);
+        yield return new WaitForSeconds(.2f);
         knockback_flag = false;
     }
 

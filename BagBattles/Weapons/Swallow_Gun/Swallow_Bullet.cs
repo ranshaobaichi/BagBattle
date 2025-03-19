@@ -6,13 +6,19 @@ public class Swallow_Bullet : Bullet
 {
     private Vector2 movePos;
     private int rotationSpeed;
-    private Vector3 init_scale = new Vector3(0.17f, 0.17f, 0.17f);
-    private float larger_param;
-    private float damageUp;
-    private float current_damage;
+    private Vector3 init_scale;
     private HashSet<Bullet> enemyBullets = new HashSet<Bullet>();
-    private float max_scale;
+    private float current_damage;
+    [Header("吞噬系数")]
+    [Tooltip("每次吞噬变大百分比")]public float larger_param;
+    [Tooltip("每次吞噬增加伤害")]public float damageUp;
+    [Tooltip("体积最大增加倍数")]public float max_scale;
 
+    void Start()
+    {
+        init_scale = transform.localScale;
+        max_scale += 1;
+    }
     private new void Update()
     {
         base.Update();

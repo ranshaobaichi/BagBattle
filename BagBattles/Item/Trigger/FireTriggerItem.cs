@@ -3,7 +3,7 @@ using UnityEngine;
 public class FireTriggerItem : TriggerItem
 {
     private Trigger.FireCountTriggerAttribute fireTriggerAttribute;
-    public override Trigger.TriggerType GetType() => fireTriggerAttribute.triggerType;
+    public override Trigger.TriggerType GetTriggerType() => fireTriggerAttribute.triggerType;
     private int currentFireCount = 0;
 
     protected override void InitializeAttr(object attr)
@@ -31,8 +31,8 @@ public class FireTriggerItem : TriggerItem
 
     public override void StopTrigger()
     {
-        CancelInvoke(nameof(TriggerItems));
         BulletSpawner.Instance.fireEvent.RemoveListener(ReceiveFireEvent);
+        currentFireCount = 0; // 重置开火次数
         Debug.Log("触发器已停用");
     }
     

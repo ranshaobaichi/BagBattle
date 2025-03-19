@@ -3,7 +3,7 @@ using UnityEngine;
 public class TimeTriggerItem : TriggerItem
 {
     private Trigger.TimeTriggerAttribute timeTriggerAttribute;
-    public override Trigger.TriggerType GetType() => timeTriggerAttribute.triggerType;
+    public override Trigger.TriggerType GetTriggerType() => timeTriggerAttribute.triggerType;
 
     protected override void InitializeAttr(object attr)
     {

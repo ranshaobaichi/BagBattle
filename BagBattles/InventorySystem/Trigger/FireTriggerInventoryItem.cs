@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class InventoryFireTriggerItem : InventoryTriggerItem
+public class FireTriggerInventoryItem : TriggerInventoryItem
 {
     [Header("开火触发道具")]
     public Trigger.FireCountTriggerAttribute fireTriggerAttribute;

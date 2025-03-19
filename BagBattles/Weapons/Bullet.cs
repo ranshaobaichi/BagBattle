@@ -21,6 +21,7 @@ public class Bullet : MonoBehaviour
         Jump_Bullet,
         Split_Bullet
     };
+
     [Serializable] [Tooltip("子弹基础属性")]
     public struct BulletBasicAttribute
     {
@@ -46,20 +47,19 @@ public class Bullet : MonoBehaviour
         current_pass_num = bulletBasicAttribute.bullet_pass_nums;
     }
 
+    protected virtual void Update()
+    {
+        if(TimeController.Instance.TimeUp() || PlayerController.Instance.Live() == false)
+        {
+            rigidbody.velocity = Vector2.zero;
+            StopAllCoroutines();
+        }
+    }
+
     public virtual void SetSpeed(Vector2 direction)
     {
         rigidbody.velocity = direction.normalized * bulletBasicAttribute.speed;
         // transform.rotation = Quaternion.LookRotation(direction);
-    }
-
-    protected virtual void Update()
-    {
-        //gameover
-        if (!(gameObject.activeSelf && GameObject.FindWithTag("Player").activeSelf && TimeController.Instance.TimeUp() == false))
-        {
-            rigidbody.velocity = Vector2.zero;
-            return;
-        }
     }
 
     public virtual void Del()

@@ -7,15 +7,9 @@ using UnityEngine;
 public class Jump_Bullet : Bullet
 {
     private Vector2 x_direct, y_direct;
-    private float v_x, v_y;
+    [Tooltip("x y方向偏移速度")] public float v_x, v_y;
 
     private float timer = 0;
-
-    public void SetBullet(float x, float y)
-    {
-        v_x = x;
-        v_y = y;
-    }
 
     public override void SetSpeed(Vector2 direction)
     {

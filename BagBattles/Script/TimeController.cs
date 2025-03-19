@@ -55,7 +55,7 @@ public class TimeController : MonoBehaviour
     public void TimeUpEvent()
     {
         timeUP = true;
-        PlayerController.Instance.Dead();
+        PlayerController.Instance.FinishRound();
         StartCoroutine(ChooseUI());
     }
     

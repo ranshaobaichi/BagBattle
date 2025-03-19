@@ -4,19 +4,13 @@ using UnityEngine;
 
 public class Lightning_Bullet : Bullet
 {
-    [Tooltip("连锁范围")] private float chainRadius;
-    [Tooltip("连锁次数")] private int maxChainCount; // 最大连锁次数
-    [Tooltip("闪电线持续时间")] private float lineDuration; // 闪电线的持续时间
-    public GameObject lightningParent;
+    [Tooltip("连锁范围")] public float chainRadius;
+    [Tooltip("连锁次数")] public int maxChainCount; // 最大连锁次数
+    [Tooltip("闪电线持续时间")] public float lineDuration; // 闪电线的持续时间
+    private GameObject lightningParent;
     private bool isDestoried;
 
     HashSet<EnemyController> enemies = new HashSet<EnemyController>();
-    public void SetBullet(float ch, int ma, float li)
-    {
-        chainRadius = ch;
-        maxChainCount = ma;
-        lineDuration = li;
-    }
 
     private void Start()
     {

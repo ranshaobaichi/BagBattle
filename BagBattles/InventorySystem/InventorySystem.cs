@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class InventorySystem : MonoBehaviour
@@ -18,12 +16,6 @@ public class InventorySystem : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    void Start()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
-    public void SetActive(bool isActive)
-    {
-        gameObject.SetActive(isActive);
-    }
+    void Start() => DontDestroyOnLoad(gameObject);
+    public void SetActive(bool isActive) => gameObject.SetActive(isActive);
 }

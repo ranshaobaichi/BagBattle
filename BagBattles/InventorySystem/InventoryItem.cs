@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using UnityEditor.Timeline.Actions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [System.Serializable]
     public enum Direction
@@ -29,33 +28,40 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         public Direction itemDirection;
     }
 
+    #region 仓库物品基础属性
     [Header("物体基础属性")]
     // public string itemName;
     protected Sprite itemIcon;
     // public Item.ItemType itemType;
     public Shape shape;
 
-    private RectTransform rectTransform;
-    private CanvasGroup canvasGroup;
-    private Vector3 originalPosition;
-    private InventoryManager inventoryManager;
-    private GameObject inventorySystem;
-    [SerializeField]
-    public List<GridCell> currentLayOnGrid = new();   //在哪个块上
-    [SerializeField]
-    private List<GridCell> previousLayOnGrid = new();
-    private Transform previousParent;
+    protected RectTransform rectTransform;
+    protected CanvasGroup canvasGroup;
+    protected Vector3 originalPosition;
+    protected InventoryManager inventoryManager;
+    protected GameObject inventorySystem;
+    protected List<GridCell> currentLayOnGrid = new();   //在哪个块上
+    protected List<GridCell> previousLayOnGrid = new();
+    protected Transform previousParent;
 
     //用于射线检测覆盖物体
-    private List<RectTransform> raycastPoints = new();
-    private List<GridCell> previousHoveredCells = new();
-    private Canvas canvas;
+    protected List<RectTransform> raycastPoints = new();
+    protected List<GridCell> previousHoveredCells = new();
+    protected Canvas canvas;
+    #endregion
 
-    public Item item; // 物品脚本
+    #region 道具属性
+    [Tooltip("道具类型")] protected Item.ItemType itemType;
+    [HideInInspector] public bool triggerDectectFlag = false; // 可否被触发器检测标志位
+    #endregion
 
+    #region 对外接口
+    public Item.ItemType GetItemType() => itemType;
+    public abstract object GetAttribute();
     public void LayOnGrid(GridCell gridCell) => currentLayOnGrid.Add(gridCell);
     public Shape GetShape() => shape;
-    
+    #endregion
+
     [ContextMenu("Rotate")]
     public void RotateTransform()
     {
@@ -78,13 +84,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     void OnEnable()
     {
-        if(item == null)
-            item = GetComponent<Item>();
-        if (item == null)
-        {
-            Debug.LogError("物品脚本未找到，请确保物体上有Item组件");
-            return;
-        }
         // 这里可以根据需要初始化物品的名称和图标
         // SetItemDetails(itemType);
         foreach (Transform child in transform)
@@ -92,6 +91,9 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             if (child.CompareTag("RaycastPoint"))
                 raycastPoints.Add(child.GetComponent<RectTransform>());
         }
+
+        // 承载的道具初始化
+        triggerDectectFlag = true;
     }
 
     // 开始拖动
@@ -176,7 +178,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                 {
                     currentLayOnGrid.Add(gridCell);
                     gridCell.SetCanPlaceItem(false);
-                    gridCell.itemOnGrid = item; // 恢复格子物品类型
+                    gridCell.itemOnGrid = this; // 恢复格子物品类型
                 }
                 break;
             case 1:
@@ -192,7 +194,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                     // Debug.Log("cell pos: " + cell.gridX + " " + cell.gridY);
                     InventoryManager.Instance.gridCells[cell].SetCanPlaceItem(false);
                     currentLayOnGrid.Add(InventoryManager.Instance.gridCells[cell]);
-                    InventoryManager.Instance.gridCells[cell].itemOnGrid = item; // 恢复格子物品类型
+                    InventoryManager.Instance.gridCells[cell].itemOnGrid = this; // 恢复格子物品类型
                 }
                 break;
             default:
@@ -207,7 +209,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     }
 
     // 封装方法，获取当前所有子物体射线位置的GridCell
-    private List<GridCell> GetHoveredCells()
+    protected List<GridCell> GetHoveredCells()
     {
         List<GridCell> hoveredCells = new();
 

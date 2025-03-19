@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
 public class BombZone : MonoBehaviour
 {
     private CircleCollider2D range;
@@ -9,6 +7,7 @@ public class BombZone : MonoBehaviour
     private float radius;
     private float damage;
     private bool showRange;
+    private float bombTime;
     private int circleSegments = 50; // 圆圈的平滑度
 
 
@@ -16,32 +15,33 @@ public class BombZone : MonoBehaviour
     {
         range = GetComponent<CircleCollider2D>();
     }
-    public void Initialize(float r, float d, bool show)
+    public void Initialize(float r, float d, bool show, float bomb_t)
     {
         showRange = show;
         radius = r;
         damage = d;
         range.radius = radius;
+        bombTime = bomb_t;
         DrawCircle();
+        StartCoroutine(Bomb());
     }
-    void Update()
+
+    public IEnumerator Bomb()
     {
-        if (Input.GetMouseButtonDown(1))
+        yield return new WaitForSeconds(bombTime);
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, radius);
+        foreach (var collider in hitColliders)
         {
-            Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, radius);
-            foreach (var collider in hitColliders)
+            if (collider.CompareTag("Enemy"))
             {
-                if (collider.CompareTag("Enemy"))
+                EnemyController enemy = collider.GetComponent<EnemyController>();
+                if (enemy != null && enemy.Live())
                 {
-                    EnemyController enemy = collider.GetComponent<EnemyController>();
-                    if (enemy != null && enemy.Live())
-                    {
-                        enemy.TakeDamage(damage);
-                    }
+                    enemy.TakeDamage(damage);
                 }
             }
-            Destroy(gameObject);
         }
+        ObjectPool.Instance.PushObject(gameObject);
     }
 
     private void DrawCircle()

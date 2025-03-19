@@ -7,25 +7,25 @@ using UnityEngine;
 public class Cigarette_Bullet : Bullet
 {
     public GameObject firePrefab; // 火焰区域的预制体
-    [Tooltip("旋转速度（度/秒）")] private float rotationSpeed;
+    [Tooltip("子弹旋转速度（度/秒）")] public float rotationSpeed;
     [Header("火焰区域参数")]
-    [Tooltip("火焰影响半径")] private float explosionRadius;
-    [Tooltip("火焰持续时间")] private float fireDuration;
-    [Tooltip("每次伤害的间隔时间")] private float fireTickInterval;
-    [Tooltip("火焰的伤害值")] private float fireDamage;
-    [Tooltip("是否显示火焰范围")] private bool showRange;
+    [Tooltip("火焰影响半径")] public float explosionRadius;
+    [Tooltip("火焰持续时间")] public float fireDuration;
+    [Tooltip("每次伤害的间隔时间")] public float fireTickInterval;
+    [Tooltip("火焰的伤害值")] public float fireDamage;
+    [Tooltip("是否显示火焰范围")] public bool showRange;
 
     private Vector2 movePos;
 
-    public void SetBullet(float ro, float ex, float du, float ti, float f_da, bool sh)
-    {
-        rotationSpeed = ro;
-        explosionRadius = ex;
-        fireDuration = du;
-        fireTickInterval = ti;
-        fireDamage = f_da;
-        showRange = sh;
-    }
+    // public void SetBullet(float ro, float ex, float du, float ti, float f_da, bool sh)
+    // {
+    //     rotationSpeed = ro;
+    //     explosionRadius = ex;
+    //     fireDuration = du;
+    //     fireTickInterval = ti;
+    //     fireDamage = f_da;
+    //     showRange = sh;
+    // }
     protected override void Update()
     {
         base.Update();
