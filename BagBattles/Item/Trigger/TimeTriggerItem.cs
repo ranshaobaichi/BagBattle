@@ -5,19 +5,23 @@ public class TimeTriggerItem : TriggerItem
     private Trigger.TimeTriggerAttribute timeTriggerAttribute;
     public override Trigger.TriggerType GetTriggerType() => timeTriggerAttribute.triggerType;
 
-    protected override void InitializeAttr(object attr)
+    protected override void InitializeAttr(object specificType)
     {
-        timeTriggerAttribute = attr as Trigger.TimeTriggerAttribute;
+        if (specificType is not Assets.BagBattles.Types.TimeTriggerType type)
+        {
+            Debug.LogError("触发器属性类型错误");
+            return;
+        }
+        timeTriggerAttribute = ItemAttribute.Instance.GetAttribute(Item.ItemType.TriggerItem, Trigger.TriggerType.ByTime, type) as Trigger.TimeTriggerAttribute;
         if (timeTriggerAttribute == null)
         {
-            Debug.LogError("时间触发器属性初始化失败");
+            Debug.LogError($"TimeAttribute触发器属性初始化失败, itemid{transform.GetInstanceID()},itemname{gameObject.name}");
             return;
         }
     }
-
+    
     public override void StartTrigger()
     {
-        Debug.Log("触发器开始工作");
         if (timeTriggerAttribute == null)
         {
             Debug.LogError("触发器属性未初始化");

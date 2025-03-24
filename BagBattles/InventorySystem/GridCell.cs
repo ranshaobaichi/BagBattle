@@ -9,6 +9,7 @@ public class GridCell : MonoBehaviour
     public InventoryManager.GridPos gridPos;
     private Canvas canvas;
     public InventoryItem itemOnGrid; // 格子上放置的物品类型
+    public Transform centerContainer;
 
     void Awake()
     {

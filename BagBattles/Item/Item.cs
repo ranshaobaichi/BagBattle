@@ -16,8 +16,8 @@ public abstract class Item
     [Serializable]
     public struct BulletItemAttribute
     {
-        public int bulletCount;
-        public Bullet.BulletType bulletType;
+        [Tooltip("子弹类型")] public Bullet.BulletType bulletType;
+        [Tooltip("子弹发射数量")] public int bulletCount;
     }
     [Serializable]
     public struct FoodItemAttribute

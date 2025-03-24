@@ -2,17 +2,23 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// BUG: 添加triggerPoint，用来规定触发器的触发点
 public abstract class TriggerInventoryItem : InventoryItem
 {
     #region 组件属性
     [Header("绑定物品")]
     // [SerializeField] public Trigger.BaseTriggerAttribute triggerItemAttribute;
-    public Dictionary<Item.ItemType, List<object>> triggerItems = new Dictionary<Item.ItemType, List<object>>(); //记录该触发器可触发的物品
+    public Dictionary<Item.ItemType, List<object>> triggerItems; //记录该触发器可触发的物品
+    protected Trigger.TriggerType triggerType;
+    protected Trigger.TriggerRange triggerRange;
     #endregion
-    public abstract Trigger.TriggerType GetTriggerType();
+
+    #region 对外接口
+    public Trigger.TriggerType GetTriggerType() => triggerType;
+    public Trigger.TriggerRange GetTriggerRange() => triggerRange;
+    #endregion
 
     public TriggerInventoryItem() => itemType = Item.ItemType.TriggerItem;
-
     private bool HasSpace(InventoryManager.GridPos gridPos, Direction direction)
     {
         int gridHeight = InventoryManager.Instance.GetGridHeight();
@@ -40,31 +46,37 @@ public abstract class TriggerInventoryItem : InventoryItem
         }
         return false;
     }
+    protected new void Awake()
+    {
+        base.Awake();
+        triggerItems = new Dictionary<Item.ItemType, List<object>>();
+    }
+
 
     //TODO: 改为从哪格开始触发 触发方向 触发格数
     public bool DetectItems()
     {
         if (currentLayOnGrid == null || currentLayOnGrid.Count == 0)
         {
-            Debug.LogError("触发器未放置在格子上");
+            Debug.Log("触发器未放置在格子上");
             return false;
         }
         List<InventoryItem> ContainItems = new List<InventoryItem>(); // 触发器检测到的物品
         triggerItems.Clear();
         // 触发逻辑
-        switch (((Trigger.BaseTriggerAttribute)GetAttribute()).triggerRange)
+        switch (triggerRange)
         {
             case Trigger.TriggerRange.SingleCell:
-                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 1));
+                ContainItems.AddRange(DetectStraightDirection(itemDirection, 1));
                 break;
             case Trigger.TriggerRange.DoubleCell:
-                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 2));
+                ContainItems.AddRange(DetectStraightDirection(itemDirection, 2));
                 break;
             case Trigger.TriggerRange.TripleCell:
-                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, 3));
+                ContainItems.AddRange(DetectStraightDirection(itemDirection, 3));
                 break;
             case Trigger.TriggerRange.FullRow:
-                ContainItems.AddRange(DetectStraightDirection(GetShape().itemDirection, InventoryManager.Instance.GetGridWidth() + 3));
+                ContainItems.AddRange(DetectStraightDirection(itemDirection, InventoryManager.Instance.GetGridWidth() + 3));
                 break;
             case Trigger.TriggerRange.FourStraightSingleCell:
                 ContainItems.AddRange(DetectStraightDirection(Direction.UP, 1));
@@ -85,10 +97,13 @@ public abstract class TriggerInventoryItem : InventoryItem
         {
             if (triggerItems.ContainsKey(item.GetItemType()) == false)
                 triggerItems.Add(item.GetItemType(), new List<object>());
-            if (item.GetAttribute() != null)
-                triggerItems[item.GetItemType()].Add(item.GetAttribute());
+            if (item.GetItemType() != Item.ItemType.None)
+            {
+                triggerItems[item.GetItemType()].Add(item.GetSpecificType());
+                Debug.Log("触发器检测到物品：" + item.GetItemType() + " " + item.GetSpecificType());
+            }
             else
-                Debug.LogError($"触发器检测到的物品类型{item.GetItemType()}不支持GetAttribute方法");
+                Debug.LogError($"未绑定抽象物品类型");
             item.triggerDectectFlag = true; // 触发器检测到物品后，设置该物品不可被触发器检测
         }
 
@@ -229,7 +244,7 @@ public abstract class TriggerInventoryItem : InventoryItem
         switch (triggerRange)
         {
             case Trigger.TriggerRange.NineGrid:
-                bool upFlag = HasSpace(basePos, Direction.UP), 
+                bool upFlag = HasSpace(basePos, Direction.UP),
                     downFlag = HasSpace(basePos, Direction.DOWN),
                     leftFlag = HasSpace(basePos, Direction.LEFT),
                     rightFlag = HasSpace(basePos, Direction.RIGHT);

@@ -33,18 +33,19 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region 对外接口
-    public void AddTriggerItem(TriggerInventoryItem item, Trigger.TriggerType type)
+    public void AddTriggerItem(TriggerInventoryItem item)
     {
+        Trigger.TriggerType type = item.GetTriggerType();
         switch (type)
         {
             case Trigger.TriggerType.ByTime:
                 TimeTriggerItem timeTriggerItem = triggerGameObject.AddComponent<TimeTriggerItem>();
-                timeTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                timeTriggerItem.Initialize(item.GetSpecificType(), item.triggerItems);
                 triggerItems.Add(timeTriggerItem);
                 break;
             case Trigger.TriggerType.ByFireTimes:
                 FireTriggerItem fireTriggerItem = triggerGameObject.AddComponent<FireTriggerItem>();
-                fireTriggerItem.Initialize(item.GetAttribute(), item.triggerItems);
+                fireTriggerItem.Initialize(item.GetSpecificType(), item.triggerItems);
                 triggerItems.Add(fireTriggerItem);
                 break;
             default:
@@ -83,7 +84,7 @@ public class PlayerController : MonoBehaviour
         foreach (var item in triggerItems)
         {
             Debug.Log("player trigger item: " + item.GetType());
-            item.StartTrigger();
+            item.LaunchTrigger();
         }
 
         // 启动枪械模组
@@ -136,6 +137,7 @@ public class PlayerController : MonoBehaviour
         invincible_timer = 0.0f;
         face = 0;
         rb = GetComponent<Rigidbody2D>();
+        rb.mass = 1000f;
         bulletSpawner = transform.GetComponent<BulletSpawner>();
     }
 

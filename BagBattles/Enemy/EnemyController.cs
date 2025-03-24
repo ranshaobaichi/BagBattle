@@ -75,6 +75,13 @@ public class EnemyController : MonoBehaviour
     // Start is called before the first frame update
     protected virtual void Start()
     {
+        if(TimeController.Instance.TimeUp() == true)
+        {
+            live = false;
+            rb.velocity = Vector2.zero;
+            ObjectPool.Instance.PushObject(gameObject);
+            return;
+        }
         Initialize();
         player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
         ice_effect = new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f };
@@ -83,9 +90,11 @@ public class EnemyController : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        if (PlayerController.Instance.Live() == false || live == false)
+        if (TimeController.Instance.TimeUp() == true)
         {
+            live = false;
             rb.velocity = Vector2.zero;
+            ObjectPool.Instance.PushObject(gameObject);
             return;
         }
         find_way();

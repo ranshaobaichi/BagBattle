@@ -1,52 +1,54 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
+// BUG：添加basePoint（预制体中），用来规定物体放置中心点
 public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    [System.Serializable]
+    [Serializable]
     public enum Direction
     {
+        NONE,
         UP,
         LEFT,
         DOWN,
         RIGHT
     }
-    [System.Serializable]
+    [Serializable]
     public enum ItemShape
     {
+        NONE,
         SQUARE_11,
         RECT_12,
         RECT_13,
-        L_SHAPE_12_11
+        L_12_11
     }
-    [System.Serializable]
-    public struct Shape
-    {
-        public ItemShape itemShape;
-        public Direction itemDirection;
-    }
+
 
     #region 仓库物品基础属性
     [Header("物体基础属性")]
     // public string itemName;
-    protected Sprite itemIcon;
+    protected Sprite itemIcon = null;
     // public Item.ItemType itemType;
-    public Shape shape;
+    protected ItemShape itemShape = ItemShape.NONE;
+    protected Direction itemDirection = Direction.UP;
 
     protected RectTransform rectTransform;
     protected CanvasGroup canvasGroup;
     protected Vector3 originalPosition;
     protected InventoryManager inventoryManager;
     protected GameObject inventorySystem;
-    protected List<GridCell> currentLayOnGrid = new();   //在哪个块上
-    protected List<GridCell> previousLayOnGrid = new();
+    [NonSerialized] protected List<GridCell> currentLayOnGrid;   //在哪个块上
+    [NonSerialized] protected List<GridCell> previousLayOnGrid;
     protected Transform previousParent;
 
     //用于射线检测覆盖物体
-    protected List<RectTransform> raycastPoints = new();
-    protected List<GridCell> previousHoveredCells = new();
+    [SerializeField]
+    [NonSerialized] protected List<RectTransform> raycastPoints;
+    [NonSerialized] protected List<GridCell> previousHoveredCells;
     protected Canvas canvas;
     #endregion
 
@@ -57,35 +59,68 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
     #region 对外接口
     public Item.ItemType GetItemType() => itemType;
-    public abstract object GetAttribute();
+    public ItemShape GetShape() => itemShape;
+    public Direction GetDirection() => itemDirection;
     public void LayOnGrid(GridCell gridCell) => currentLayOnGrid.Add(gridCell);
-    public Shape GetShape() => shape;
+    /// <summary>
+    /// 初始化物品 注意设置方向与形状
+    /// </summary>
+    public abstract bool Initialize(object type); // 初始化物品
+    public abstract object GetSpecificType();
     #endregion
+
+    protected void InitializeDirection(Direction direction)
+    {
+        if (direction == Direction.NONE)
+        {
+            Debug.LogError("物品方向初始化错误");
+            return;
+        }
+        while (itemDirection != direction)
+            RotateTransform();
+    }
 
     [ContextMenu("Rotate")]
     public void RotateTransform()
     {
         // 物品形状顺时针旋转90度
-        transform.Rotate(0f, 0f, 90f); // 顺时针旋转90度
-        shape.itemDirection = (Direction)(((int)shape.itemDirection + 1) % 4); // 顺时针旋转90度
+        transform.Rotate(0f, 0f, -90f); // 顺时针旋转90度
+        itemDirection = itemDirection switch
+        {
+            Direction.UP => Direction.RIGHT,
+            Direction.RIGHT => Direction.DOWN,
+            Direction.DOWN => Direction.LEFT,
+            Direction.LEFT => Direction.UP,
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
-    void Awake()
+    protected void Awake()
     {
+        // 初始化变量
+        currentLayOnGrid = new();
+        previousLayOnGrid = new();
+        raycastPoints = new();
+        previousHoveredCells = new();
+        itemDirection = Direction.UP; // 默认朝上
+
+        // 获取组件
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
         inventoryManager = FindObjectOfType<InventoryManager>();
         inventorySystem = GameObject.FindGameObjectWithTag("InventorySystem");
         canvas = gameObject.AddComponent<Canvas>();
         gameObject.AddComponent<GraphicRaycaster>();
+
+        // 设置Canvas属性
         canvas.overrideSorting = true; // 允许覆盖排序
         canvas.sortingOrder = 1; // 设置排序层级
-    }
 
-    void OnEnable()
-    {
+
         // 这里可以根据需要初始化物品的名称和图标
         // SetItemDetails(itemType);
+        if (raycastPoints == null)
+            Debug.LogError("raycastPoints is null");
         foreach (Transform child in transform)
         {
             if (child.CompareTag("RaycastPoint"))
@@ -183,7 +218,7 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                 break;
             case 1:
                 Debug.Log("放置成功");
-                if(target.Count == 0)
+                if (target.Count == 0)
                 {
                     Debug.LogError("放置成功，但target为空");
                     return;
