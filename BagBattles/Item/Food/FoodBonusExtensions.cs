@@ -1,34 +1,34 @@
 using System.Collections.Generic;
 
-public static class FoodBonusExtensions
+public static class LinkedListExtensions
 {
     /// <summary>
-    /// 减少列表中所有加成的回合数，并移除已过期的加成
+    /// 减少链表中所有加成的回合数，并移除过期的加成，返回移除的加成值总和
     /// </summary>
-    /// <param name="bonusList">要处理的加成列表</param>
-    /// <returns>返回所有被移除加成的值总和</returns>
-    public static float DecreaseRounds(this LinkedList<Food.Bonus> bonusList)
+    /// <param name="list">要处理的加成链表</param>
+    /// <returns>移除的加成值总和</returns>
+    public static float DecreaseRounds(this LinkedList<Food.Bonus> list)
     {
-        float sum = 0;
-        LinkedListNode<Food.Bonus> node = bonusList.First;
+        if (list == null || list.Count == 0)
+            return 0;
+
+        float removedBonusSum = 0;
+        LinkedListNode<Food.Bonus> node = list.First;
         
         while (node != null)
         {
-            node.Value.DecreaseRound();
+            LinkedListNode<Food.Bonus> nextNode = node.Next;
+            Food.Bonus bonus = node.Value;
+            bonus.DecreaseRound();
             
-            if (node.Value.roundLeft <= 0)
+            if (bonus.roundLeft <= 0)
             {
-                sum += node.Value.bonusValue; // 累加移除的加成值
-                LinkedListNode<Food.Bonus> nextNode = node.Next;
-                bonusList.Remove(node);
-                node = nextNode;
+                removedBonusSum += bonus.bonusValue;
+                list.Remove(node);
             }
-            else
-            {
-                node = node.Next;
-            }
+            node = nextNode;
         }
         
-        return sum;
+        return removedBonusSum;
     }
 }

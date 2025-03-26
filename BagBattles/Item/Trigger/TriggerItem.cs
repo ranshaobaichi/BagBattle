@@ -15,6 +15,7 @@ public abstract class TriggerItem : MonoBehaviour
     public abstract Trigger.TriggerType GetTriggerType(); // 触发器触发物品
     #endregion
 
+
     public void LaunchTrigger()
     {
         Debug.Log("触发器开始工作");
@@ -31,7 +32,7 @@ public abstract class TriggerItem : MonoBehaviour
         else
             Debug.Log("触发器没有物品可用");
     }
-    public void Initialize(object specificType, Dictionary<Item.ItemType, List<object>> triggerItem)
+    public void Initialize(object specificType, Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>> triggerItem)
     {
         // 初始化触发器属性
         InitializeAttr(specificType);
@@ -47,7 +48,7 @@ public abstract class TriggerItem : MonoBehaviour
             {
                 case Item.ItemType.BulletItem:
                     Debug.Log($"触发器绑定了{itemValue.Count}个子弹道具");
-                    foreach (var value in itemValue)
+                    foreach (var (inventorySource, value) in itemValue)
                     {
                         if (value is not BulletType bulletType)
                         {
@@ -55,32 +56,27 @@ public abstract class TriggerItem : MonoBehaviour
                             continue;
                         }
                         BulletItem tmp = new(bulletType);
+                        tmp.SetSourceInventoryItem(inventorySource);
                         Debug.Log($"子弹道具属性：{tmp.bulletAttribute.bulletCount} {tmp.bulletAttribute.bulletType}");
                         items[Item.ItemType.BulletItem].Add(tmp);
                     }
                     break;
                 case Item.ItemType.FoodItem:
-                    // BUG: 未更改添加逻辑 ： object应该为specificType
                     Debug.Log($"触发器初始化了{itemValue.Count}个食物道具");
-                    foreach (var value in itemValue)
+                    foreach (var (inventorySource, value) in itemValue)
                     {
-                        try
+                        if (value is not FoodType foodType)
                         {
-                            FoodItem tmp = new((FoodItem.FoodItemAttribute)value);
-                            foreach (var foodItemAttribute in ((FoodItem.FoodItemAttribute)value).foodItemAttributes)
-                            {
-                                Debug.Log($"食物道具加成种类：{foodItemAttribute.foodBonusType} " +
-                                          $"食物道具加成数值：{foodItemAttribute.foodBonusValue} " +
-                                          $"食物道具持续时间类型：{foodItemAttribute.foodDurationType} " +
-                                          $"食物道具加成持续时间（回合数）：{foodItemAttribute.roundLeft}");
-                            }
-                            items[Item.ItemType.FoodItem].Add(tmp);
+                            Debug.LogError("触发器绑定了无效的子弹类型" + value);
+                            continue;
                         }
-                        catch (Exception ex)
+                        FoodItem tmp = new(foodType);
+                        tmp.SetSourceInventoryItem(inventorySource);
+                        foreach (var food in tmp.foodItemAttributes.foodItemAttributes)
                         {
-                            Debug.LogError($"创建食物道具失败: {ex.Message}");
-                            Debug.LogException(ex);
+                            Debug.Log($"食物道具属性：{food.foodBonusType} {food.foodBonusValue} {food.foodDurationType} {food.roundLeft}");
                         }
+                        items[Item.ItemType.FoodItem].Add(tmp);
                     }
                     break;
                 default:
@@ -93,6 +89,7 @@ public abstract class TriggerItem : MonoBehaviour
     {
         Debug.Log("触发器触发物品");
         // 触发器的触发逻辑
+        bool flag = false;
         foreach (var itemList in items)
         {
             foreach (var item in itemList.Value)
@@ -102,12 +99,20 @@ public abstract class TriggerItem : MonoBehaviour
                     Debug.LogError("触发器触发的物品为空");
                     continue;
                 }
+                flag = true;
                 item.UseItem();
             }
+            if (itemList.Key == Item.ItemType.FoodItem)
+            {
+                items[Item.ItemType.FoodItem].Clear();
+                items.Remove(Item.ItemType.FoodItem);
+            }
         }
-
-        // 食物道具触发后清空
-        items[Item.ItemType.FoodItem].Clear();
+        if (!flag)
+        {
+            Debug.Log("触发器没有物品可用");
+            StopTrigger();
+        }
     }
 
     public virtual void Destroy()

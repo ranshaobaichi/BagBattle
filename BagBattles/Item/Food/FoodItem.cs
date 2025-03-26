@@ -1,12 +1,20 @@
-using System.Collections.Generic;
 using UnityEngine;
+using Assets.BagBattles.Types;
 
 public class FoodItem : Item
 {
-    FoodItemAttribute foodItemAttributes = new();
-    public FoodItem(FoodItemAttribute foodItemAttribute)
+    public FoodItemAttribute foodItemAttributes = new();
+    public FoodItem(FoodType foodType)
     {
-        foodItemAttributes = foodItemAttribute;
+        if (ItemAttribute.Instance.GetAttribute(Item.ItemType.FoodItem, foodType) is FoodItemAttribute attr)
+        {
+            foodItemAttributes = attr;
+            itemType = Item.ItemType.FoodItem;
+        }
+        else
+        {
+            Debug.LogError("无法获取食物道具属性");
+        }
     }
 
     public override void UseItem()
@@ -73,6 +81,7 @@ public class FoodItem : Item
                     break;
             }
         }
-        InventoryManager.Instance.RemoveFoodItem(foodItemAttributes.foodInventoryItem); // 使用道具后移除道具
+        //TODO: 食物道具使用后删除
+        InventoryManager.Instance.RemoveFoodItem(sourceInventoryItem as FoodInventoryItem);
     }
 }

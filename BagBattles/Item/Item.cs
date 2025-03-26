@@ -30,9 +30,22 @@ public abstract class Item
             [Tooltip("食物持续时间类型")] public Food.FoodDurationType foodDurationType;
             [Tooltip("食物加成持续时间（回合数）")] public int roundLeft;
         }
-        [Tooltip("食物道具名称")] public string foodName;
         [Tooltip("食物效果配置")] public List<BasicFoodAttribute> foodItemAttributes;
-        public FoodInventoryItem foodInventoryItem;
     }
+
+    protected InventoryItem sourceInventoryItem; // 对应仓库中物品
     public abstract void UseItem(); // 使用道具
+    public ItemType itemType; // 道具类型
+    public ItemType GetItemType()
+    {
+        if (itemType == ItemType.None)
+        {
+            throw new ArgumentOutOfRangeException(nameof(itemType), "道具类型未设置");
+        }
+        return itemType;
+    }
+    public void SetSourceInventoryItem(InventoryItem item)
+    {
+        sourceInventoryItem = item;
+    }
 }

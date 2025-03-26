@@ -8,9 +8,10 @@ public class BulletItem : Item
 
     public BulletItem(BulletType bulletType)
     {
-        if(ItemAttribute.Instance.GetAttribute(Item.ItemType.BulletItem, bulletType) is Item.BulletItemAttribute attr)
+        if (ItemAttribute.Instance.GetAttribute(Item.ItemType.BulletItem, bulletType) is Item.BulletItemAttribute attr)
         {
             bulletAttribute = attr;
+            itemType = Item.ItemType.BulletItem;
         }
         else
         {

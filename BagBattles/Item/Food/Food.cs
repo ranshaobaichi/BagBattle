@@ -1,5 +1,6 @@
 
 using System;
+using System.ComponentModel;
 using UnityEngine;
 
 public class Food
@@ -8,7 +9,7 @@ public class Food
     public enum FoodBonusType
     {
         None,
-        [Tooltip("按值增加伤害")] AttackByValue,
+        [Tooltip("按值增加伤害")] [Description("按值增加伤害")] AttackByValue,
         [Tooltip("按百分比增加伤害")] AttackByPercent,
         [Tooltip("速度增加（默认按百分比）")] Speed,
         [Tooltip("增加生命值")] Health,

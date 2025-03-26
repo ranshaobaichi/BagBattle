@@ -29,20 +29,32 @@ public class BulletSpawner : MonoBehaviour
 
     #region 属性加成
 
+    [Header("极限属性")]
+    [Tooltip("最快攻击速度")] public float maxAttackSpeed;
+    [Tooltip("初始子弹最大装载速度")] public float maxLoadSpeed;
+    // 记录初始属性
+    private float initAttackSpeed;
+    private float initLoadSpeed;
+
+
     [Header("攻击伤害加成")]
     // 伤害计算：（基础+临时加+永久加）* （1 + 临时乘 + 永久乘）
-    private float permanent_damage_add_bonus;   // 永久伤害加成
-    private LinkedList<Food.Bonus> temporary_damage_add_bonus = new();   // 临时伤害加成，波次结束后消失
-    private float permanent_damage_percentage_bonus;   // 永久伤害加成
-    private LinkedList<Food.Bonus> temporary_damage_percentage_bonus = new();   // 临时伤害加成，波次结束后消失
+    private float permanent_damage_add_bonus = 0;   // 永久伤害加成
+    private float temporary_damage_add_bonus_sum = 0;   // 临时伤害加成
+    [SerializeField] private LinkedList<Food.Bonus> temporary_damage_add_bonus = new();   // 临时伤害加成，波次结束后消失
+    private float permanent_damage_percentage_bonus = 0;   // 永久伤害加成
+    private float temporary_damage_percentage_bonus_sum = 0;   // 临时伤害加成
+    [SerializeField] private LinkedList<Food.Bonus> temporary_damage_percentage_bonus = new();   // 临时伤害加成，波次结束后消失
 
     [Header("攻击速度加成")]
-    private float permanent_attack_speed_bonus;   // 永久攻击速度加成
-    private LinkedList<Food.Bonus> temporary_attack_speed_bonus = new();   // 临时攻击速度加成，波次结束后消失
+    private float permanent_attack_speed_bonus = 0;   // 记录永久攻击速度加成
+    private float temporary_attack_speed_bonus_sum = 0;   // 记录临时攻击速度加成
+    [SerializeField] private LinkedList<Food.Bonus> temporary_attack_speed_bonus = new();   // 临时攻击速度加成，波次结束后消失
     
     [Header("装载速度加成")]
-    private float permanent_load_speed_bonus;   // 永久装载速度加成
-    private LinkedList<Food.Bonus> temporary_load_speed_bonus = new();   // 临时装载速度加成，波次结束后消失
+    private float permanent_load_speed_bonus = 0;   // 记录永久装载速度加成
+    private float temporary_load_speed_bonus_sum = 0;   // 记录临时装载速度加成
+    [SerializeField] private LinkedList<Food.Bonus> temporary_load_speed_bonus = new();   // 临时装载速度加成，波次结束后消失
 
     #endregion
 
@@ -57,6 +69,9 @@ public class BulletSpawner : MonoBehaviour
             Instance = this;
         else if (Instance != this)
             Destroy(gameObject);
+
+        initAttackSpeed = attackSpeed;
+        initLoadSpeed = loadSpeed;
     }
 
     public void StartFire()
@@ -64,10 +79,6 @@ public class BulletSpawner : MonoBehaviour
         Debug.Log("开始发射");
         attackFlag = true;
         isOnFire = true;
-
-        // 获得临时加成
-        attackSpeed += temporary_attack_speed_bonus.Sum(b => b.bonusValue);
-        loadSpeed += temporary_load_speed_bonus.Sum(b => b.bonusValue);
 
         StartCoroutine(DectEnemyInRange());
         StartCoroutine(LoadBullet());
@@ -80,6 +91,8 @@ public class BulletSpawner : MonoBehaviour
         enemyInRange.Clear();
         bullets.Clear();
         StopAllCoroutines();
+
+        DecreaseTemporaryBonus(); 
     }
 
     void FixedUpdate()
@@ -298,25 +311,75 @@ public class BulletSpawner : MonoBehaviour
 
     #region 加成处理及接口
     // 永久属性加成：获得时直接加到属性中；
-    // 临时属性加成：获得时加入到链表中，回合结束时减少回合数，回合数为0时移除，每次回合开始时/开枪时获得
+    // 临时属性加成：获得时加入到链表中，并在属性中加成；回合结束时减少回合数，回合数为0时移除，并从属性中减去加成值；
+    //              并在每回合结束时清除过期的加成    
+
     // 伤害加成
-    public void AddTemporaryAddDamage(float _damage, int _round = 1) => temporary_damage_add_bonus.AddLast(new Food.Bonus(_damage, _round));
-    public void AddPermanentAddDamage(float _damage) => permanent_damage_add_bonus += _damage;
-    public void AddTemporaryPercentageDamage(float _damage, int _round = 1) => temporary_damage_percentage_bonus.AddLast(new Food.Bonus(_damage, _round));
-    public void AddPermanentPercentageDamage(float _damage) => permanent_damage_percentage_bonus += _damage;
+    public void AddTemporaryAddDamage(float _damage, int _round = 1)
+    {
+        temporary_damage_add_bonus.AddLast(new Food.Bonus(_damage, _round));
+        temporary_damage_add_bonus_sum += _damage;
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
+    public void AddPermanentAddDamage(float _damage) 
+    { 
+        permanent_damage_add_bonus += _damage;
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
+    public void AddTemporaryPercentageDamage(float _damage, int _round = 1)
+    {
+        temporary_damage_percentage_bonus.AddLast(new Food.Bonus(_damage, _round));
+        temporary_damage_percentage_bonus_sum += _damage;
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
+    public void AddPermanentPercentageDamage(float _damage) 
+    { 
+        permanent_damage_percentage_bonus += _damage;
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
     // 攻击速度加成
-    public void AddTemporaryAttackSpeed(float _attackSpeed, int _round = 1) => temporary_attack_speed_bonus.AddLast(new Food.Bonus(_attackSpeed, _round));
+    public void AddTemporaryAttackSpeed(float _attackSpeed, int _round = 1)
+    {
+        temporary_attack_speed_bonus.AddLast(new Food.Bonus(_attackSpeed, _round));
+        temporary_attack_speed_bonus_sum += _attackSpeed;
+        attackSpeed = Mathf.Max(attackSpeed - _attackSpeed, maxAttackSpeed);
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
     public void AddPermanentAttackSpeed(float _attackSpeed)
     {
-        permanent_attack_speed_bonus += attackSpeed;
-        attackSpeed += _attackSpeed;
+        permanent_attack_speed_bonus += _attackSpeed;
+        attackSpeed = Mathf.Max(attackSpeed - _attackSpeed, maxAttackSpeed);
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
     }
     // 装载速度加成
-    public void AddTemporaryLoadSpeed(float _loadSpeed, int _round = 1) => temporary_load_speed_bonus.AddLast(new Food.Bonus(_loadSpeed, _round));
+    public void AddTemporaryLoadSpeed(float _loadSpeed, int _round = 1)
+    {
+        temporary_load_speed_bonus.AddLast(new Food.Bonus(_loadSpeed, _round));
+        temporary_load_speed_bonus_sum += _loadSpeed;
+        loadSpeed = Mathf.Max(loadSpeed - _loadSpeed, maxLoadSpeed);
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
     public void AddPermanentLoadSpeed(float _loadSpeed)
     {
-        permanent_load_speed_bonus += loadSpeed;
-        loadSpeed += _loadSpeed;
+        permanent_load_speed_bonus += _loadSpeed;
+        loadSpeed = Mathf.Max(loadSpeed - _loadSpeed, maxLoadSpeed);
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
     }
 
     private void DealWithBonus(Bullet bullet)
@@ -327,22 +390,45 @@ public class BulletSpawner : MonoBehaviour
             return;
         }
         float dmg = bullet.bulletBasicAttribute.damage;
-        float tempDamageAdd = temporary_damage_add_bonus.Sum(b => b.bonusValue);
-        float tempDamageMul = temporary_damage_percentage_bonus.Sum(b => b.bonusValue);
-        bullet.bulletBasicAttribute.damage = (dmg + permanent_damage_add_bonus + tempDamageAdd) * (1 + permanent_damage_percentage_bonus + tempDamageMul);
+        bullet.bulletBasicAttribute.damage = (dmg + permanent_damage_add_bonus + temporary_damage_add_bonus_sum) * (1 + permanent_damage_percentage_bonus + temporary_damage_percentage_bonus_sum);
     }
 
+    public void DecreaseTemporaryBonus()
+    {
+        // 处理过期的临时加成
+        temporary_damage_add_bonus_sum -= temporary_damage_add_bonus.DecreaseRounds();
+        temporary_damage_percentage_bonus_sum -= temporary_damage_percentage_bonus.DecreaseRounds();
+        attackSpeed = Mathf.Min(attackSpeed + temporary_attack_speed_bonus.DecreaseRounds(), initAttackSpeed);
+        loadSpeed = Mathf.Min(loadSpeed + temporary_load_speed_bonus.DecreaseRounds(), initLoadSpeed);
+        
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
+    }
+
+    // 添加清除所有临时加成的方法，供编辑器使用
     public void ClearTemporaryBonus()
     {
-        // 清除临时加成
-        attackSpeed -= temporary_attack_speed_bonus.Sum(b => b.bonusValue);
-        loadSpeed -= temporary_load_speed_bonus.Sum(b => b.bonusValue);
-
-        // 处理过期的临时加成
-        temporary_damage_add_bonus.DecreaseRounds();
-        temporary_damage_percentage_bonus.DecreaseRounds();
-        temporary_attack_speed_bonus.DecreaseRounds();
-        temporary_load_speed_bonus.DecreaseRounds();
+        // 恢复原始属性值
+        attackSpeed = Mathf.Min(attackSpeed + temporary_attack_speed_bonus_sum, initAttackSpeed);
+        loadSpeed = Mathf.Min(loadSpeed + temporary_load_speed_bonus_sum, initLoadSpeed);
+        
+        // 清空所有临时加成
+        temporary_damage_add_bonus.Clear();
+        temporary_damage_add_bonus_sum = 0;
+        
+        temporary_damage_percentage_bonus.Clear();
+        temporary_damage_percentage_bonus_sum = 0;
+        
+        temporary_attack_speed_bonus.Clear();
+        temporary_attack_speed_bonus_sum = 0;
+        
+        temporary_load_speed_bonus.Clear();
+        temporary_load_speed_bonus_sum = 0;
+        
+        #if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        #endif
     }
     #endregion
     private void OnDrawGizmos()

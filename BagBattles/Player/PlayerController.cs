@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     private BulletSpawner bulletSpawner;
 
     [Header("Trigger&Item")]
-    [SerializeField] private List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
+    [SerializeField] public List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
     public GameObject triggerGameObject; //承载触发器子物体
     // private List<Item> items = new(); // 角色拥有的物品
     private int face;
@@ -105,8 +105,6 @@ public class PlayerController : MonoBehaviour
 
         // 结束枪械模组
         bulletSpawner.EndFire();
-        bulletSpawner.ClearTemporaryBonus();
-
         // 结束并清除触发器
         DestroyAllTriggers();
         Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();

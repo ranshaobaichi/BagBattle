@@ -172,21 +172,21 @@ public class InventoryManager : MonoBehaviour
                     Debug.LogError($"子弹类型{(BulletType)specificType}错误,无法获取子弹道具属性");
                     return;
                 }
-                InventoryItem.ItemShape itemShape = ItemAttribute.Instance.GetItemShape(itemType, bulletType);
-                if(itemShape == InventoryItem.ItemShape.NONE)
+                InventoryItem.ItemShape bulletItemShape = ItemAttribute.Instance.GetItemShape(itemType, bulletType);
+                if(bulletItemShape == InventoryItem.ItemShape.NONE)
                 {
                     Debug.LogError($"子弹类型{(BulletType)specificType}错误,无法获取子弹形状");
                     return;
                 }
                 // 获得形状预制体
-                GameObject itemPrefab = GetGameobjectByShape(itemShape);
-                if (itemPrefab == null)
+                GameObject bulletItemPrefab = GetGameobjectByShape(bulletItemShape);
+                if (bulletItemPrefab == null)
                 {
                     Debug.LogError("物品预制体未找到");
                     return;
                 }
                 // 生成物品并添加组件
-                GameObject bulletItem = Instantiate(itemPrefab, InventorySystem.transform);
+                GameObject bulletItem = Instantiate(bulletItemPrefab, InventorySystem.transform);
                 BulletInventoryItem bulletInventoryItem = bulletItem.AddComponent<BulletInventoryItem>();
                 if(!bulletInventoryItem.Initialize(bulletType))
                 {
@@ -198,6 +198,35 @@ public class InventoryManager : MonoBehaviour
                 bulletInInventory.Add(bulletInventoryItem);
                 break;
             case Item.ItemType.FoodItem:
+                if (specificType is not FoodType foodType)
+                {
+                    Debug.LogError($"食物类型{(FoodType)specificType}错误,无法获取食物道具属性");
+                    return;
+                }
+                InventoryItem.ItemShape foodItemShape = ItemAttribute.Instance.GetItemShape(itemType, foodType);
+                if (foodItemShape == InventoryItem.ItemShape.NONE)
+                {
+                    Debug.LogError($"食物类型{(FoodType)specificType}错误,无法获取食物形状");
+                    return;
+                }
+                // 获得形状预制体
+                GameObject foodItemPrefab = GetGameobjectByShape(foodItemShape);
+                if (foodItemPrefab == null)
+                {
+                    Debug.LogError("物品预制体未找到");
+                    return;
+                }
+                // 生成物品并添加组件
+                GameObject foodItem = Instantiate(foodItemPrefab, InventorySystem.transform);
+                FoodInventoryItem foodInventoryItem = foodItem.AddComponent<FoodInventoryItem>();
+                if(!foodInventoryItem.Initialize(foodType))
+                {
+                    Debug.LogError("FoodInventoryItem initialization failed.");
+                    Destroy(foodItem);
+                    return;
+                }
+
+                foodInInventory.Add(foodInventoryItem);
                 break;
             default:
                 Debug.LogError($"物品类型{itemType}错误或未实现,无法获取触发器属性");
@@ -205,7 +234,13 @@ public class InventoryManager : MonoBehaviour
         }
     }
     public void RemoveFoodItem(FoodInventoryItem foodItem)
-    {
+    {   
+        if(foodItem == null)
+        {
+            Debug.LogError("移除食物物品失败，物品为空");
+            return;
+        }
+
         if (foodInInventory.Contains(foodItem))
         {
             foodInInventory.Remove(foodItem);
@@ -232,6 +267,9 @@ public class InventoryManager : MonoBehaviour
         foodInInventory = new();
         bulletInInventory = new();
 
+        triggerInInventory.Clear();
+        foodInInventory.Clear();
+        bulletInInventory.Clear();
         GridPos.rows = rows;
         GridPos.columns = columns;
         inventoryPanel.GetComponent<GridLayoutGroup>().constraintCount = columns;

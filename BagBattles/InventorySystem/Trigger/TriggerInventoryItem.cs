@@ -8,7 +8,7 @@ public abstract class TriggerInventoryItem : InventoryItem
     #region 组件属性
     [Header("绑定物品")]
     // [SerializeField] public Trigger.BaseTriggerAttribute triggerItemAttribute;
-    public Dictionary<Item.ItemType, List<object>> triggerItems; //记录该触发器可触发的物品
+    public Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>> triggerItems; //记录该触发器可触发的物品
     protected Trigger.TriggerType triggerType;
     protected Trigger.TriggerRange triggerRange;
     #endregion
@@ -49,7 +49,7 @@ public abstract class TriggerInventoryItem : InventoryItem
     protected new void Awake()
     {
         base.Awake();
-        triggerItems = new Dictionary<Item.ItemType, List<object>>();
+        triggerItems = new Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>>();
     }
 
 
@@ -96,10 +96,10 @@ public abstract class TriggerInventoryItem : InventoryItem
         foreach (var item in ContainItems)
         {
             if (triggerItems.ContainsKey(item.GetItemType()) == false)
-                triggerItems.Add(item.GetItemType(), new List<object>());
+                triggerItems.Add(item.GetItemType(), new List<(InventoryItem inventorySource, object specificType)>());
             if (item.GetItemType() != Item.ItemType.None)
             {
-                triggerItems[item.GetItemType()].Add(item.GetSpecificType());
+                triggerItems[item.GetItemType()].Add((item, item.GetSpecificType()));
                 Debug.Log("触发器检测到物品：" + item.GetItemType() + " " + item.GetSpecificType());
             }
             else

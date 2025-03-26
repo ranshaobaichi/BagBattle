@@ -11,12 +11,13 @@ public class InventoryManagerEditor : Editor
     private Trigger.TriggerType selectedTriggerType;
     private FireTriggerType selectedFireTriggerType;
     private TimeTriggerType selectedTimeTriggerType;
-    private bool showTriggerOptions = false;
-
     // 子弹类型
     private BulletType selectedBulletType = BulletType.None;
-    private bool showBulletOptions = false;
-    
+    // 食物类型
+    private FoodType selectedFoodType = FoodType.None;
+
+    private bool selected = false;
+
     public override void OnInspectorGUI()
     {
         // 绘制默认的Inspector界面
@@ -35,53 +36,56 @@ public class InventoryManagerEditor : Editor
         switch (selectedItemType)
         {
             case Item.ItemType.TriggerItem:
-                showTriggerOptions = EditorGUILayout.Foldout(showTriggerOptions, "触发器选项");
-                if (showTriggerOptions)
+                EditorGUI.indentLevel++;
+                selectedTriggerType = (Trigger.TriggerType)EditorGUILayout.EnumPopup("触发器类型", selectedTriggerType);
+                // 根据触发器类型显示不同选项
+                switch (selectedTriggerType)
                 {
-                    EditorGUI.indentLevel++;
-                    selectedTriggerType = (Trigger.TriggerType)EditorGUILayout.EnumPopup("触发器类型", selectedTriggerType);
-
-                    // 根据触发器类型显示不同选项
-                    switch (selectedTriggerType)
-                    {
-                        case Trigger.TriggerType.ByFireTimes:
-                            selectedFireTriggerType = (FireTriggerType)EditorGUILayout.EnumPopup("开火触发器类型", selectedFireTriggerType);
-                            break;
-                        case Trigger.TriggerType.ByTime:
-                            // 添加其他触发器类型的选项
-                            selectedTimeTriggerType = (TimeTriggerType)EditorGUILayout.EnumPopup("时间触发器类型", selectedTimeTriggerType);
-                            break;
-                        default:
-                            EditorGUILayout.HelpBox("请选择有效的触发器类型", MessageType.Warning);
-                            break;
-                    }
-                    EditorGUI.indentLevel--;
+                    case Trigger.TriggerType.ByFireTimes:
+                        selectedFireTriggerType = (FireTriggerType)EditorGUILayout.EnumPopup("开火触发器类型", selectedFireTriggerType);
+                        selected = true;
+                        break;
+                    case Trigger.TriggerType.ByTime:
+                        // 添加其他触发器类型的选项
+                        selectedTimeTriggerType = (TimeTriggerType)EditorGUILayout.EnumPopup("时间触发器类型", selectedTimeTriggerType);
+                        selected = true;
+                        break;
+                    default:
+                        EditorGUILayout.HelpBox("请选择有效的触发器类型", MessageType.Warning);
+                        break;
                 }
+                EditorGUI.indentLevel--;
                 break;
             case Item.ItemType.BulletItem:
-                showBulletOptions = EditorGUILayout.Foldout(showBulletOptions, "子弹选项");
-                if (showBulletOptions)
+                EditorGUI.indentLevel++;
+                selectedBulletType = (BulletType)EditorGUILayout.EnumPopup("子弹类型", selectedBulletType);
+                selected = true;
+                // 通用处理方式
+                if (selectedBulletType == BulletType.None)
                 {
-                    EditorGUI.indentLevel++;
-                    selectedBulletType = (BulletType)EditorGUILayout.EnumPopup("子弹类型", selectedBulletType);
-
-                    // 通用处理方式
-                    if (selectedBulletType == BulletType.None)
-                    {
-                        EditorGUILayout.HelpBox("请选择子弹类型", MessageType.Warning);
-                    }
-                    EditorGUI.indentLevel--;
+                    EditorGUILayout.HelpBox("请选择子弹类型", MessageType.Warning);
+                    selected = false;
                 }
+                EditorGUI.indentLevel--;
                 break;
             case Item.ItemType.FoodItem:
-                EditorGUILayout.HelpBox("此类型物品尚未实现掉落功能", MessageType.Info);
+                EditorGUI.indentLevel++;
+                selectedFoodType = (FoodType)EditorGUILayout.EnumPopup("食物类型", selectedFoodType);
+                selected = true;
+                // 通用处理方式
+                if (selectedFoodType == FoodType.None)
+                {
+                    selected = false;
+                    EditorGUILayout.HelpBox("请选择食物类型", MessageType.Warning);
+                }
+                EditorGUI.indentLevel--;
                 break;
         }
 
         EditorGUILayout.Space(5);
 
         // 创建测试按钮
-        GUI.enabled = showBulletOptions || showTriggerOptions;
+        GUI.enabled = selected;
         if (GUILayout.Button("生成选定物品", GUILayout.Height(30)))
         {
             // 根据选择的类型调用 DropItems
@@ -106,7 +110,7 @@ public class InventoryManagerEditor : Editor
                     inventoryManager.DropItem(selectedItemType, functionType, specificType);
                     break;
                 case Item.ItemType.BulletItem:
-                    if(selectedBulletType != BulletType.None)
+                    if (selectedBulletType != BulletType.None)
                     {
                         inventoryManager.DropItem(selectedItemType, selectedBulletType);
                     }
@@ -116,15 +120,21 @@ public class InventoryManagerEditor : Editor
                     }
                     break;
                 case Item.ItemType.FoodItem:
-                    EditorGUILayout.HelpBox("Food物品尚未实现掉落功能", MessageType.Info);
+                    if (selectedFoodType != FoodType.None)
+                    {
+                        inventoryManager.DropItem(selectedItemType, selectedFoodType);
+                    }
+                    else
+                    {
+                        Debug.LogError("请选择食物类型");
+                    }
                     break;
                 default:
                     Debug.LogError("未实现的物品类型");
                     break;
             }
-
+            selected = false;
+            GUI.enabled = false;
         }
-
-        GUI.enabled = true;
     }
 }
