@@ -18,5 +18,9 @@ public class CameraController : MonoBehaviour
             cam_pos.z = -cam_height;
             transform.position = cam_pos;
         }
+        else
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
+        }
     }
 }

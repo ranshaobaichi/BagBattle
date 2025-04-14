@@ -1,12 +1,43 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.IO;
+
+[System.Serializable]
+public class PlayerData
+{
+    [Serializable] public class PlayerBonusData
+    {
+        public float permanent_speed_bonus;
+        public LinkedList<Food.Bonus> temporary_speed_bonus;
+        public float temporary_speed_bonus_sum = 0f; // 临时加成总和
+    }
+
+    public float init_speed;
+    public float bonus_speed;
+    public float speed;
+    public float maxSpeed;
+    public float minSpeed;
+    public float invincible_time;
+    public PlayerBonusData playerBonusData; // 角色属性加成数据
+    public List<string> triggerGuids; // 触发器数据
+}
+
 public class PlayerController : MonoBehaviour
 {
+    const string playerSaveDataPath = "playerData.json";
     public static PlayerController Instance = null;
     #region 组件属性
     [Header("基础属性")]
     [Tooltip("角色移动速度")] public float speed;
+    private float init_speed;
+    // [SerializeField] private float currentSpeed;
+    // [Tooltip("速度变化平滑率(值越大变化越快)")] private float speedLerpRate = 5f; // 速度插值速率
+    [Tooltip("角色最大移动速度")] public float maxSpeed;
+    [Tooltip("角色最小移动速度")] public float minSpeed;
+
     [Tooltip("受击无敌时间")] public float invincible_time;
 
     [Header("属性标志位")]
@@ -18,7 +49,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("组件")]
     private static Rigidbody2D rb;
-    private BulletSpawner bulletSpawner;
+    private Animator animator;
 
     [Header("Trigger&Item")]
     [SerializeField] public List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
@@ -28,8 +59,12 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region 属性加成
+    private float bonus_speed; // 角色加成速度 --> 所有加成无视限制时的数值
     private float permanent_speed_bonus;
     private LinkedList<Food.Bonus> temporary_speed_bonus = new();
+    private float temporary_speed_bonus_sum = 0f; // 临时加成总和
+
+    private LinkedList<(Food.FoodBonusType, Food.Bonus)> temporary_time_bonus = new();
     #endregion
 
     #region 对外接口
@@ -40,12 +75,12 @@ public class PlayerController : MonoBehaviour
         {
             case Trigger.TriggerType.ByTime:
                 TimeTriggerItem timeTriggerItem = triggerGameObject.AddComponent<TimeTriggerItem>();
-                timeTriggerItem.Initialize(item.GetSpecificType(), item.triggerItems);
+                timeTriggerItem.Initialize(item.inventoryID, item.GetSpecificType(), item.triggerItems);
                 triggerItems.Add(timeTriggerItem);
                 break;
             case Trigger.TriggerType.ByFireTimes:
                 FireTriggerItem fireTriggerItem = triggerGameObject.AddComponent<FireTriggerItem>();
-                fireTriggerItem.Initialize(item.GetSpecificType(), item.triggerItems);
+                fireTriggerItem.Initialize(item.inventoryID, item.GetSpecificType(), item.triggerItems);
                 triggerItems.Add(fireTriggerItem);
                 break;
             default:
@@ -53,17 +88,31 @@ public class PlayerController : MonoBehaviour
                 break;
         }
     }
+
     public void Dead()
     {
         live = false;
-        gameObject.SetActive(false);
+        rb.velocity = Vector2.zero;
+        PlayerPrefs.SetInt(PlayerPrefsKeys.HAS_REMAINING_GAME_KEY, 0);
+        GetComponent<SpriteRenderer>().enabled = false;
+        TimeController.Instance.SetActive(false);
         StopAllCoroutines();
+        StartCoroutine(DeadScene());
     }
+    private IEnumerator DeadScene()
+    {
+        yield return new WaitForSeconds(1.5f);
+        // 结束游戏
+        SceneManager.LoadScene("EndScene");
+        gameObject.SetActive(false);
+    }
+
     public void FinishRound()
     {
         live = false;
-        gameObject.SetActive(false);
+        rb.velocity = Vector2.zero;
         StopAllCoroutines();
+        gameObject.SetActive(false);
     }
     public bool Live() => live; // 角色是否存活
     public void SetActive(bool active) => gameObject.SetActive(active); // 设置角色是否激活
@@ -79,6 +128,7 @@ public class PlayerController : MonoBehaviour
         invincible_flag = false;
         invincible_timer = 0.0f;
         face = 0;
+        // currentSpeed = 0;
 
         // 启动触发器
         foreach (var item in triggerItems)
@@ -87,11 +137,11 @@ public class PlayerController : MonoBehaviour
             item.LaunchTrigger();
         }
 
+        Debug.Log("player trigger item count: " + triggerItems.Count);
         // 启动枪械模组
-        bulletSpawner.StartFire();
-
-        // 角色获得临时加成
-        speed += temporary_speed_bonus.Sum(x => x.bonusValue);
+        BulletSpawner.Instance.StartFire();
+        Debug.Log("player bullet spawner: " + BulletSpawner.Instance.gameObject.name);
+        StartCoroutine(ScanTemporyBonusList());
     }
 
     private void OnDisable()
@@ -104,7 +154,7 @@ public class PlayerController : MonoBehaviour
         face = 0;
 
         // 结束枪械模组
-        bulletSpawner.EndFire();
+        BulletSpawner.Instance.EndFire();
         // 结束并清除触发器
         DestroyAllTriggers();
         Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();
@@ -114,12 +164,12 @@ public class PlayerController : MonoBehaviour
         }
 
         // 移除临时加成
-        ClearTemporaryBonus();
+        DecreaseTemporaryBonus();
+        HealthController.Instance.DecreaseTemporaryBonus();
     }
 
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
         if (Instance == null)
         {
             Instance = this;
@@ -129,28 +179,36 @@ public class PlayerController : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        DontDestroyOnLoad(gameObject);
 
-        live = true;
-        invincible_flag = false;
-        invincible_timer = 0.0f;
-        face = 0;
         rb = GetComponent<Rigidbody2D>();
-        rb.mass = 1000f;
-        bulletSpawner = transform.GetComponent<BulletSpawner>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Start()
+    {
+        if (PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 1)
+        {
+            init_speed = speed;
+            bonus_speed = init_speed;
+        }
+        rb.mass = 50f;
     }
 
     private void Update()
     {
         if (live == false) return;
-        //move
+        // 移动输入
         Vector3 move = new(0f, 0f, 0f)
         {
             x = Input.GetAxisRaw("Horizontal"),
             y = Input.GetAxisRaw("Vertical")
         };
+        bool isMoving = move.x != 0 || move.y != 0;
 
+        // 角色朝向
         Quaternion flip = transform.rotation;
-        if (move.x != 0)
+        if (isMoving)
         {
             flip.y = rb.velocity.x > 0 ? 180 : 0;
             face = (int)flip.y;
@@ -158,8 +216,26 @@ public class PlayerController : MonoBehaviour
         else
             flip.y = face;
         transform.rotation = flip;
-        Vector2 v = (Vector2)move.normalized;
-        rb.velocity = v * speed;
+
+        // 角色移动
+        // 平滑过渡到目标速度
+        // if (isMoving)
+        //     currentSpeed = Mathf.Lerp(currentSpeed, speed, Time.deltaTime * speedLerpRate);
+        // else
+        //     currentSpeed = Mathf.Lerp(currentSpeed, 0, Time.deltaTime * speedLerpRate);
+        // Vector2 v = (Vector2)move.normalized;
+        // rb.velocity = v * currentSpeed;
+        // if (currentSpeed > speed * 2f / 3f)
+        //     animator.SetBool("IsWalking", true);
+        // else
+        //     animator.SetBool("IsWalking", false);
+
+        rb.velocity = move.normalized * speed;
+        if (isMoving)
+            animator.SetBool("IsWalking", true);
+        else
+            animator.SetBool("IsWalking", false);
+        // 更新状态
         Update_status();
     }
 
@@ -185,7 +261,7 @@ public class PlayerController : MonoBehaviour
         if (invincible_flag == false)
         {
             invincible_flag = true;
-            HeartController.TakeDamage((int)damage);
+            HealthController.Instance.TakeDamage((int)damage);
         }
     }
 
@@ -199,20 +275,186 @@ public class PlayerController : MonoBehaviour
 
     #region 属性接口
     // 速度属性
-    public void AddPermanentSpeed(float bonus)
+    public void AddBonus(FoodItemAttribute.BasicFoodAttribute foodItemAttribute)
     {
-        permanent_speed_bonus += bonus;
-        speed += bonus;
-    }
-    public void AddTemporarySpeed(float bonus, int round) => temporary_speed_bonus.AddLast(new Food.Bonus(bonus, round)); // 添加临时加成
-    
-    private void ClearTemporaryBonus()
-    {
-        // 清除临时加成
-        speed -= temporary_speed_bonus.Sum(x => x.bonusValue);
+        Food.FoodBonusType type = foodItemAttribute.foodBonusType;
+        float value = foodItemAttribute.foodBonusValue;
+        Food.FoodDurationType foodDurationType = foodItemAttribute.foodDurationType;
+        float timeLeft = foodItemAttribute.timeLeft;
 
-        // 处理过期的临时加成
-        temporary_speed_bonus.DecreaseRounds();
+        switch (type)
+        {
+            // 角色加成
+            case Food.FoodBonusType.Speed:
+                switch (foodDurationType)
+                {
+                    case Food.FoodDurationType.Permanent:
+                        permanent_speed_bonus += value;
+                        break;
+                    case Food.FoodDurationType.TemporaryRounds:
+                        temporary_speed_bonus.AddLast(new Food.Bonus(value, timeLeft));
+                        temporary_speed_bonus_sum += value;
+                        bonus_speed += value;
+                        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
+                        break;
+                    case Food.FoodDurationType.TemporaryTime:
+                        bonus_speed += value;
+                        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
+                        temporary_time_bonus.AddLast((type, new Food.Bonus(value, timeLeft)));
+                        Debug.Log($"加成类型{type}剩余时间: {timeLeft}");
+                        break;
+                }
+                break;
+
+            // 枪械子弹加成
+            case Food.FoodBonusType.AttackDamageByValue:
+            case Food.FoodBonusType.AttackDamageByPercent:
+            case Food.FoodBonusType.AttackSpeed:
+            case Food.FoodBonusType.LoadSpeed:
+                BulletSpawner.Instance.AddBonus(type, value, foodDurationType, timeLeft);
+                break;
+
+            // 角色血量、护甲加成
+            case Food.FoodBonusType.HealthUp:
+            case Food.FoodBonusType.ArmorUp:
+            case Food.FoodBonusType.HealthDown:
+                HealthController.Instance.AddBonus(type, value, foodDurationType, timeLeft);
+                break;
+            default:
+                Debug.LogError($"加成类型{type}不支持");
+                break;
+        }
+    }
+
+    private IEnumerator ScanTemporyBonusList()
+    {
+        yield return new WaitForSeconds(.5f);
+        var currentNode = temporary_time_bonus.First;
+        while (currentNode != null)
+        {
+            var currentValue = currentNode.Value;
+            var timeLeft = currentValue.Item2.timeLeft - 0.5f;
+            var newBonus = new Food.Bonus(currentValue.Item2.bonusValue, timeLeft);
+            currentNode.Value = (currentValue.Item1, newBonus);
+            Debug.Log($"加成类型{currentNode.Value.Item1}剩余时间: {timeLeft}");
+            if (timeLeft <= 0)
+            {
+                temporary_time_bonus.Remove(currentNode);
+                switch (currentNode.Value.Item1)
+                {
+                    case Food.FoodBonusType.Speed:
+                        bonus_speed -= currentNode.Value.Item2.bonusValue;
+                        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
+                        break;
+                    default:
+                        Debug.LogError($"加成类型{currentNode.Value.Item1}在角色处不支持");
+                        break;
+                }
+            }
+            currentNode = currentNode.Next;
+        }
+        StartCoroutine(ScanTemporyBonusList());
+    }
+
+    private void DecreaseTemporaryBonus()
+    {
+        // 清除临时回合加成
+        float decrease_speed = temporary_speed_bonus.DecreaseRounds();
+        temporary_speed_bonus_sum -= decrease_speed;
+        bonus_speed -= decrease_speed;
+
+        // 清除本回合限时加成
+        var currentNode = temporary_time_bonus.First;
+        while (currentNode != null)
+        {
+            switch (currentNode.Value.Item1)
+            {
+                case Food.FoodBonusType.Speed:
+                    bonus_speed -= currentNode.Value.Item2.bonusValue;
+                    break;
+                default:
+                    Debug.LogError($"加成类型{currentNode.Value.Item1}在角色处不支持");
+                    break;
+            }
+            currentNode = currentNode.Next;
+        }
+        temporary_time_bonus.Clear();
+
+        // 计算实际速度
+        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
     }
     #endregion
+
+    public void StorePlayerData()
+    {
+        PlayerData playerData = new()
+        {
+            init_speed = init_speed,
+            speed = speed,
+            bonus_speed = bonus_speed,
+            maxSpeed = maxSpeed,
+            minSpeed = minSpeed,
+            invincible_time = invincible_time,
+            playerBonusData = new PlayerData.PlayerBonusData()
+            {
+                permanent_speed_bonus = permanent_speed_bonus,
+                temporary_speed_bonus = temporary_speed_bonus,
+                temporary_speed_bonus_sum = temporary_speed_bonus_sum
+            },
+            triggerGuids = new List<string>()
+        };
+
+        foreach (var item in triggerItems)
+        {
+            Guid triggerGuid = item.sourceTriggerInventoryItemGuid;
+            // TODO: 存储杂项物品
+            playerData.triggerGuids.Add(triggerGuid.ToString());
+        }
+
+        // 将数据转换为JSON
+        string jsonData = JsonUtility.ToJson(playerData, true);
+        // 保存到文件
+        string filePath = Path.Combine(Application.persistentDataPath, playerSaveDataPath);
+        File.WriteAllText(filePath, jsonData);
+        Debug.Log("Player data saved to: " + filePath);
+    }
+
+
+    public void LoadPlayerData()
+    {
+        string filePath = Path.Combine(Application.persistentDataPath, playerSaveDataPath);
+        
+        if (File.Exists(filePath))
+        {
+            string jsonData = System.IO.File.ReadAllText(filePath);
+            PlayerData loadedData = JsonUtility.FromJson<PlayerData>(jsonData);
+
+            // 应用加载的数据
+            init_speed = loadedData.init_speed;
+            speed = loadedData.speed;
+            bonus_speed = loadedData.bonus_speed;
+            maxSpeed = loadedData.maxSpeed;
+            minSpeed = loadedData.minSpeed;
+            invincible_time = loadedData.invincible_time;
+            
+            // 加载角色加成数据
+            permanent_speed_bonus = loadedData.playerBonusData.permanent_speed_bonus;
+            temporary_speed_bonus = loadedData.playerBonusData.temporary_speed_bonus;
+            temporary_speed_bonus_sum = loadedData.playerBonusData.temporary_speed_bonus_sum;
+            
+            // 清除现有触发器
+            DestroyAllTriggers();
+
+            foreach (var triggerGuid in loadedData.triggerGuids)
+            {
+                TriggerInventoryItem triggerInventoryItem = InventoryManager.Instance.GetTriggerInventoryItemByGuid(Guid.Parse(triggerGuid));
+                AddTriggerItem(triggerInventoryItem);
+            }            
+            Debug.Log("Player data loaded from: " + filePath);
+        }
+        else
+        {
+            Debug.LogWarning("No player data file found at: " + filePath);
+        }
+    }
 }

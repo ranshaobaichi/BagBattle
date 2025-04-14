@@ -12,9 +12,11 @@ public class InventoryManagerEditor : Editor
     private FireTriggerType selectedFireTriggerType;
     private TimeTriggerType selectedTimeTriggerType;
     // 子弹类型
-    private BulletType selectedBulletType = BulletType.None;
+    private BulletType selectedBulletType;
     // 食物类型
-    private FoodType selectedFoodType = FoodType.None;
+    private FoodType selectedFoodType;
+    // 环绕物类型
+    private SurroundType selectedSurroundType;
 
     private bool selected = false;
 
@@ -61,11 +63,11 @@ public class InventoryManagerEditor : Editor
                 selectedBulletType = (BulletType)EditorGUILayout.EnumPopup("子弹类型", selectedBulletType);
                 selected = true;
                 // 通用处理方式
-                if (selectedBulletType == BulletType.None)
-                {
-                    EditorGUILayout.HelpBox("请选择子弹类型", MessageType.Warning);
-                    selected = false;
-                }
+                // if (selectedBulletType == BulletType.None)
+                // {
+                //     EditorGUILayout.HelpBox("请选择子弹类型", MessageType.Warning);
+                //     selected = false;
+                // }
                 EditorGUI.indentLevel--;
                 break;
             case Item.ItemType.FoodItem:
@@ -73,13 +75,26 @@ public class InventoryManagerEditor : Editor
                 selectedFoodType = (FoodType)EditorGUILayout.EnumPopup("食物类型", selectedFoodType);
                 selected = true;
                 // 通用处理方式
-                if (selectedFoodType == FoodType.None)
-                {
-                    selected = false;
-                    EditorGUILayout.HelpBox("请选择食物类型", MessageType.Warning);
-                }
+                // if (selectedFoodType == FoodType.None)
+                // {
+                //     selected = false;
+                //     EditorGUILayout.HelpBox("请选择食物类型", MessageType.Warning);
+                // }
                 EditorGUI.indentLevel--;
                 break;
+            case Item.ItemType.SurroundItem:
+                EditorGUI.indentLevel++;
+                selectedSurroundType = (SurroundType)EditorGUILayout.EnumPopup("环绕物类型", selectedSurroundType);
+                selected = true;
+                // 通用处理方式
+                // if (selectedSurroundType == SurroundType.None)
+                // {
+                //     selected = false;
+                //     EditorGUILayout.HelpBox("请选择环绕物类型", MessageType.Warning);
+                // }
+                EditorGUI.indentLevel--;
+                break;
+            
         }
 
         EditorGUILayout.Space(5);
@@ -110,24 +125,13 @@ public class InventoryManagerEditor : Editor
                     inventoryManager.DropItem(selectedItemType, functionType, specificType);
                     break;
                 case Item.ItemType.BulletItem:
-                    if (selectedBulletType != BulletType.None)
-                    {
-                        inventoryManager.DropItem(selectedItemType, selectedBulletType);
-                    }
-                    else
-                    {
-                        Debug.LogError("请选择子弹类型");
-                    }
+                    inventoryManager.DropItem(selectedItemType, selectedBulletType);
                     break;
                 case Item.ItemType.FoodItem:
-                    if (selectedFoodType != FoodType.None)
-                    {
-                        inventoryManager.DropItem(selectedItemType, selectedFoodType);
-                    }
-                    else
-                    {
-                        Debug.LogError("请选择食物类型");
-                    }
+                    inventoryManager.DropItem(selectedItemType, selectedFoodType);
+                    break;
+                case Item.ItemType.SurroundItem:
+                    inventoryManager.DropItem(selectedItemType, selectedSurroundType);
                     break;
                 default:
                     Debug.LogError("未实现的物品类型");

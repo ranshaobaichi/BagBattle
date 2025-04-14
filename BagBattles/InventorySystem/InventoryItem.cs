@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.PlayerLoop;
@@ -27,7 +28,6 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
         L_12_11
     }
 
-
     #region 仓库物品基础属性
     [Header("物体基础属性")]
     // public string itemName;
@@ -35,13 +35,13 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
     // public Item.ItemType itemType;
     protected ItemShape itemShape = ItemShape.NONE;
     protected Direction itemDirection = Direction.UP;
+    public Guid inventoryID = Guid.NewGuid(); // 唯一ID
 
     protected RectTransform rectTransform;
     protected CanvasGroup canvasGroup;
     protected Vector3 originalPosition;
-    protected InventoryManager inventoryManager;
     protected GameObject inventorySystem;
-    [NonSerialized] protected List<GridCell> currentLayOnGrid;   //在哪个块上
+    [NonSerialized] protected List<GridCell> currentLayOnGrid = new();   //在哪个块上
     [NonSerialized] protected List<GridCell> previousLayOnGrid;
     protected Transform previousParent;
 
@@ -54,13 +54,14 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
     #region 道具属性
     [Tooltip("道具类型")] protected Item.ItemType itemType;
-    [HideInInspector] public bool triggerDectectFlag = false; // 可否被触发器检测标志位
+    [HideInInspector] public bool triggerDectectFlag; // 可否被触发器检测标志位
     #endregion
 
     #region 对外接口
     public Item.ItemType GetItemType() => itemType;
     public ItemShape GetShape() => itemShape;
     public Direction GetDirection() => itemDirection;
+    public List<GridCell> GetCurrentLayOnGrid() => currentLayOnGrid;
     public void LayOnGrid(GridCell gridCell) => currentLayOnGrid.Add(gridCell);
     /// <summary>
     /// 初始化物品 注意设置方向与形状
@@ -97,28 +98,25 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
     protected void Awake()
     {
-        // 初始化变量
-        currentLayOnGrid = new();
-        previousLayOnGrid = new();
-        raycastPoints = new();
-        previousHoveredCells = new();
-        itemDirection = Direction.UP; // 默认朝上
-
         // 获取组件
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
-        inventoryManager = FindObjectOfType<InventoryManager>();
         inventorySystem = GameObject.FindGameObjectWithTag("InventorySystem");
         canvas = gameObject.AddComponent<Canvas>();
         gameObject.AddComponent<GraphicRaycaster>();
 
-        // 设置Canvas属性
-        canvas.overrideSorting = true; // 允许覆盖排序
-        canvas.sortingOrder = 1; // 设置排序层级
-
-
         // 这里可以根据需要初始化物品的名称和图标
         // SetItemDetails(itemType);
+    }
+
+    void Start()
+    {
+        // 初始化变量
+        previousLayOnGrid = new();
+        raycastPoints = new();
+        previousHoveredCells = new();
+
+        // 获取射线检测点
         if (raycastPoints == null)
             Debug.LogError("raycastPoints is null");
         foreach (Transform child in transform)
@@ -127,7 +125,11 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                 raycastPoints.Add(child.GetComponent<RectTransform>());
         }
 
-        // 承载的道具初始化
+        // 设置Canvas属性
+        canvas.overrideSorting = true; // 允许覆盖排序
+        canvas.sortingOrder = 1; // 设置排序层级
+
+        // 可以被触发器检测标志
         triggerDectectFlag = true;
     }
 
@@ -140,17 +142,17 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
         previousParent = transform.parent; // 记录原父物体
         transform.SetParent(inventorySystem.transform); // 设置物品的父物体为InventorySystem
         rectTransform.SetAsLastSibling(); // 设置物品在父物体中的层级为最后一个
+        previousLayOnGrid.Clear(); // 清空上次占据的格子
 
+        previousLayOnGrid.AddRange(currentLayOnGrid); // 记录上次占据的格子
         //还原原所在格子状态
         foreach (GridCell gridCell in currentLayOnGrid)
         {
+            Debug.Log("还原格子状态: " + gridCell.gridPos.gridX + " " + gridCell.gridPos.gridY);
             gridCell.SetCanPlaceItem(true);
             gridCell.itemOnGrid = null; // 恢复格子物品类型
         }
         previousHoveredCells.Clear(); // 清空上次检测的格子
-        previousLayOnGrid.Clear(); // 清空上次检测的格子
-        foreach (GridCell gridCell in currentLayOnGrid)
-            previousLayOnGrid.Add(gridCell);
         currentLayOnGrid.Clear(); // 清空当前格子
     }
 
@@ -187,9 +189,35 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
     {
         canvasGroup.alpha = 1f; // 恢复物品透明度
         canvasGroup.blocksRaycasts = true; // 恢复物品的交互
+        TryPlaceItem(previousHoveredCells); // 尝试放置物品
+        previousParent = null; // 清空上次放置的父物体
+        previousLayOnGrid.Clear(); // 清空上次占据的格子
+        foreach (var cell in previousHoveredCells)
+            cell.SetNormal();
+        previousHoveredCells.Clear();
+    }
 
+    public void TryPlaceItem(List<InventoryManager.GridPos> gridPoses)
+    {
+        List<GridCell> targetCells = new List<GridCell>();
+        Debug.Log("位置数量: " + gridPoses.Count);
+        foreach (var gridPos in gridPoses)
+        {
+            if (InventoryManager.Instance.gridCells.ContainsKey(gridPos))
+                targetCells.Add(InventoryManager.Instance.gridCells[gridPos]);
+            else
+                Debug.LogError($"({gridPos.gridX},{gridPos.gridY})位置格子不存在");
+        }
+        TryPlaceItem(targetCells);
+    }
+    public void TryPlaceItem(List<GridCell> targetCells)
+    {
         List<InventoryManager.GridPos> target = new List<InventoryManager.GridPos>();
-        var ret = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells, target);
+        if (rectTransform == null)
+        {
+            rectTransform = GetComponent<RectTransform>();
+        }
+        var ret = InventoryManager.Instance.TryPlaceItemInGrid(this, targetCells, target);
     TRYAGAIN:
         switch (ret)
         {
@@ -197,7 +225,7 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                 Debug.LogError("放置target未初始化，尝试重新放置");
                 target.Clear();
                 target = new List<InventoryManager.GridPos>();
-                ret = inventoryManager.TryPlaceItemInGrid(this, previousHoveredCells, target);
+                ret = InventoryManager.Instance.TryPlaceItemInGrid(this, targetCells, target);
                 goto TRYAGAIN;
             case -1:
                 Debug.Log("放置失败，放到空白区域");
@@ -218,6 +246,7 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                 break;
             case 1:
                 Debug.Log("放置成功");
+                rectTransform.localScale = Vector3.one; // 恢复物品缩放
                 if (target.Count == 0)
                 {
                     Debug.LogError("放置成功，但target为空");
@@ -230,17 +259,13 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                     InventoryManager.Instance.gridCells[cell].SetCanPlaceItem(false);
                     currentLayOnGrid.Add(InventoryManager.Instance.gridCells[cell]);
                     InventoryManager.Instance.gridCells[cell].itemOnGrid = this; // 恢复格子物品类型
+                    Debug.Log("物品占据格子数量: " + currentLayOnGrid.Count);
                 }
                 break;
             default:
                 Debug.LogError("放置产生未知错误");
                 return;
         }
-        previousParent = null; // 清空上次放置的父物体
-        previousLayOnGrid.Clear(); // 清空上次占据的格子
-        foreach (var cell in previousHoveredCells)
-            cell.SetNormal();
-        previousHoveredCells.Clear();
     }
 
     // 封装方法，获取当前所有子物体射线位置的GridCell

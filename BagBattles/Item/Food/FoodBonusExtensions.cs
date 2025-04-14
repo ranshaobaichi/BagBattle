@@ -21,7 +21,7 @@ public static class LinkedListExtensions
             Food.Bonus bonus = node.Value;
             bonus.DecreaseRound();
             
-            if (bonus.roundLeft <= 0)
+            if (bonus.timeLeft <= 0)
             {
                 removedBonusSum += bonus.bonusValue;
                 list.Remove(node);

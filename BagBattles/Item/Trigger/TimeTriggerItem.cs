@@ -4,6 +4,7 @@ public class TimeTriggerItem : TriggerItem
 {
     private Trigger.TimeTriggerAttribute timeTriggerAttribute;
     public override Trigger.TriggerType GetTriggerType() => timeTriggerAttribute.triggerType;
+    public override object GetSpecificTriggerType() => timeTriggerAttribute.timeTriggerType;
 
     protected override void InitializeAttr(object specificType)
     {
@@ -19,7 +20,6 @@ public class TimeTriggerItem : TriggerItem
             return;
         }
     }
-    
     public override void StartTrigger()
     {
         if (timeTriggerAttribute == null)
@@ -30,7 +30,6 @@ public class TimeTriggerItem : TriggerItem
         // 触发器的使用逻辑
         InvokeRepeating(nameof(TriggerItems), timeTriggerAttribute.triggerTime, timeTriggerAttribute.triggerTime);
     }    
-
     public override void StopTrigger()
     {
         CancelInvoke(nameof(TriggerItems));

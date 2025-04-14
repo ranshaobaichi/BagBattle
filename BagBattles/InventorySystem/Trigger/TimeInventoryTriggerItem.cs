@@ -25,6 +25,7 @@ public class TimeInventoryTriggerItem : TriggerInventoryItem
             return false;
         }
 
+        triggerDectectFlag = true;
         return true;
     }
     public override object GetSpecificType() => timeTriggerType;

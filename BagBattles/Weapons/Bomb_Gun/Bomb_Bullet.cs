@@ -11,12 +11,6 @@ public class Bomb_Bullet : Bullet
 
     [Space(10)]
     public GameObject bombPrefab; //爆炸区域预制体
-    // public void SetBullet(float r,float b_damage, bool show)
-    // {
-    //     bomb_radius = r;
-    //     bomb_damage = b_damage;
-    //     show_range = show;
-    // }
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {

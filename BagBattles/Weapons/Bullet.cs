@@ -7,7 +7,7 @@ using UnityEngine.PlayerLoop;
 public class Bullet : MonoBehaviour
 {
     [Serializable]
-    public enum BulletType
+    public enum SingleBulletType
     {
         None,
         Normal_Bullet,
@@ -30,7 +30,6 @@ public class Bullet : MonoBehaviour
         [Tooltip("穿透数")] public int bullet_pass_nums;
     }
     public GameObject explosionPrefab;
-    public BulletType bulletType;
     [Tooltip("子弹基础属性")] public BulletBasicAttribute bulletBasicAttribute;
     new protected Rigidbody2D rigidbody;
     protected int current_pass_num;
@@ -110,6 +109,7 @@ public class Bullet : MonoBehaviour
     //FIXME:多个子弹碰撞同一敌人时，敌人伤害计算慢（未直接死亡），导致多个子弹同时销毁
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("子弹碰撞: " + other.name);
         if (other.CompareTag("Enemy") && other.GetComponent<EnemyController>().Live())
         {
             EnemyController enemy = other.GetComponent<EnemyController>();

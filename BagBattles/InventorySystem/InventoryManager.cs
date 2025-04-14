@@ -1,17 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Assets.BagBattles.Types;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
+using System.IO;
+using System.Linq;
+using UnityEngine.EventSystems;
+
+[Serializable]
+public class InventoryItemData
+{
+    public string guid; // 使用字符串存储GUID
+    public Vector2 blankPos; // 空白区域物体位置
+    public List<InventoryManager.GridPos> position; // 物品在网格上的位置
+}
+
+[Serializable]
+public class InventoryManagerData
+{
+    [Serializable]
+    public class TriggerInventoryItemData : InventoryItemData
+    {
+        public int functionType;
+        public int specificType;
+    }
+
+    [Serializable]
+    public class FoodInventoryItemData : InventoryItemData
+    {
+        public int foodType;
+    }
+
+    [Serializable]
+    public class BulletInventoryItemData : InventoryItemData
+    {
+        public int bulletType;
+    }
+
+    [Serializable]
+    public class SurroundInventoryItemData : InventoryItemData
+    {
+        public int surroundType;
+    }
+
+    public int rows, cols;
+    public List<TriggerInventoryItemData> triggers = new List<TriggerInventoryItemData>();
+    public List<FoodInventoryItemData> foods = new List<FoodInventoryItemData>();
+    public List<BulletInventoryItemData> bullets = new List<BulletInventoryItemData>();
+    public List<SurroundInventoryItemData> surrounds = new List<SurroundInventoryItemData>();
+}
 
 public class InventoryManager : MonoBehaviour
 {
+    const string inventorySaveDataPath = "inventoryData.json";
+    const string inventoryInitDataPath = "inventoryInitData.json";
     public static InventoryManager Instance { get; set; }
-    [System.Serializable]
+    [Serializable]
     public struct GridPos
     {
         public static int rows;
@@ -35,12 +79,24 @@ public class InventoryManager : MonoBehaviour
     // private List<List<GridCell>> gridCells;
     [NonSerialized] public Dictionary<GridPos, GridCell> gridCells;// 网格字典
     [SerializeField] public List<TriggerInventoryItem> triggerInInventory = new(); // 仓库中触发器列表
-    [NonSerialized] public List<FoodInventoryItem> foodInInventory; // 仓库中食物列表
-    [NonSerialized] public List<BulletInventoryItem> bulletInInventory; // 仓库中子弹列表
-
+    [NonSerialized] public List<FoodInventoryItem> foodInInventory = new(); // 仓库中食物列表
+    [NonSerialized] public List<BulletInventoryItem> bulletInInventory = new(); // 仓库中子弹列表
+    [NonSerialized] public List<SurroundInventoryItem> surroundInInventory = new(); // 仓库中环绕物列表
     #region 对外接口
     public int GetGridHeight() => rows; // 修正以获取网格高度
     public int GetGridWidth() => columns; // 修正以获取网格宽度
+    public TriggerInventoryItem GetTriggerInventoryItemByGuid(Guid guid)
+    {
+        foreach (var triggerItem in triggerInInventory)
+        {
+            if (triggerItem.inventoryID == guid)
+            {
+                return triggerItem;
+            }
+        }
+        Debug.LogError($"未找到GUID为{guid}的触发器道具");
+        return null;
+    } // 根据GUID获取触发器道具
     public InventoryItem GetItemOnGridcell(GridPos pos)
     {
         if (gridCells.TryGetValue(pos, out GridCell gridCell))
@@ -70,17 +126,18 @@ public class InventoryManager : MonoBehaviour
     /// <param name="itemType">基础类型</param>
     /// <param name="functionType">功能类型</param>
     /// <param name="specificType">具体类型</param>
-    public void DropItem(Item.ItemType itemType, object functionType, object specificType)
+    public GameObject DropItem(Item.ItemType itemType, object functionType, object specificType)
     {
+        GameObject ret = null;
         if (itemType != Item.ItemType.TriggerItem)
         {
             Debug.LogError($"物品类型{itemType}错误调用触发器类加载器");
-            return;
+            return null;
         }
-        if(functionType == null || specificType == null)
+        if (functionType == null || specificType == null)
         {
             Debug.LogError($"物品类型{itemType}调用错误，functionType或specificType为空");
-            return;
+            return null;
         }
         if (functionType is Trigger.TriggerType triggerType)
         {
@@ -96,16 +153,16 @@ public class InventoryManager : MonoBehaviour
                         if (itemPrefab == null)
                         {
                             Debug.LogError("物品预制体未找到");
-                            return;
+                            return null;
                         }
                         // 生成物品并添加组件
-                        GameObject fireTrigger = Instantiate(itemPrefab, InventorySystem.transform);
-                        FireInventoryTriggerItem fireInventoryTriggerItem = fireTrigger.AddComponent<FireInventoryTriggerItem>();
+                        ret = Instantiate(itemPrefab, InventorySystem.transform);
+                        FireInventoryTriggerItem fireInventoryTriggerItem = ret.AddComponent<FireInventoryTriggerItem>();
                         if (!fireInventoryTriggerItem.Initialize(fireTriggerType))
                         {
                             Debug.LogError("FireInventoryTriggerItem initialization failed.");
-                            Destroy(fireTrigger);
-                            return;
+                            Destroy(ret);
+                            return null;
                         }
                         // 将生成物体加入管理列表中
                         triggerInInventory.Add(fireInventoryTriggerItem);
@@ -113,6 +170,7 @@ public class InventoryManager : MonoBehaviour
                     else
                     {
                         Debug.LogError($"触发器类型{(Trigger.TriggerType)functionType}下的具体类型{specificType}错误,无法获取触发器属性");
+                        return null;
                     }
                     break;
                 case Trigger.TriggerType.ByTime:
@@ -125,16 +183,16 @@ public class InventoryManager : MonoBehaviour
                         if (itemPrefab == null)
                         {
                             Debug.LogError("物品预制体未找到");
-                            return;
+                            return null;
                         }
                         // 生成物品并添加组件
-                        GameObject timeTrigger = Instantiate(itemPrefab, InventorySystem.transform);
-                        TimeInventoryTriggerItem timeInventoryTriggerItem = timeTrigger.AddComponent<TimeInventoryTriggerItem>();
+                        ret = Instantiate(itemPrefab, InventorySystem.transform);
+                        TimeInventoryTriggerItem timeInventoryTriggerItem = ret.AddComponent<TimeInventoryTriggerItem>();
                         if (!timeInventoryTriggerItem.Initialize(timeTriggerType))
                         {
                             Debug.LogError("TimeInventoryTriggerItem initialization failed.");
-                            Destroy(timeTrigger);
-                            return;
+                            Destroy(ret);
+                            return null;
                         }
                         // 将生成物体加入管理列表中
                         triggerInInventory.Add(timeInventoryTriggerItem);
@@ -146,14 +204,15 @@ public class InventoryManager : MonoBehaviour
                     break;
                 default:
                     Debug.LogError($"触发器类型{(Trigger.TriggerType)functionType}错误或未实现,无法获取触发器属性");
-                    return;
+                    return null;
             }
         }
         else
         {
             Debug.LogError($"未知触发器类型{functionType}");
-            return;
+            return null;
         }
+        return ret;
     }
 
     /// <summary>
@@ -161,38 +220,39 @@ public class InventoryManager : MonoBehaviour
     /// </summary>
     /// <param name="itemType">基础类型</param>
     /// <param name="specificType">具体类型</param>
-    public void DropItem(Item.ItemType itemType, object specificType)
+    public GameObject DropItem(Item.ItemType itemType, object specificType)
     {
+        GameObject ret = null;
         switch (itemType)
         {
             case Item.ItemType.BulletItem:
                 // 获得形状
-                if(specificType is not BulletType bulletType)
+                if (specificType is not BulletType bulletType)
                 {
                     Debug.LogError($"子弹类型{(BulletType)specificType}错误,无法获取子弹道具属性");
-                    return;
+                    return null;
                 }
                 InventoryItem.ItemShape bulletItemShape = ItemAttribute.Instance.GetItemShape(itemType, bulletType);
-                if(bulletItemShape == InventoryItem.ItemShape.NONE)
+                if (bulletItemShape == InventoryItem.ItemShape.NONE)
                 {
                     Debug.LogError($"子弹类型{(BulletType)specificType}错误,无法获取子弹形状");
-                    return;
+                    return null;
                 }
                 // 获得形状预制体
                 GameObject bulletItemPrefab = GetGameobjectByShape(bulletItemShape);
                 if (bulletItemPrefab == null)
                 {
                     Debug.LogError("物品预制体未找到");
-                    return;
+                    return null;
                 }
                 // 生成物品并添加组件
-                GameObject bulletItem = Instantiate(bulletItemPrefab, InventorySystem.transform);
-                BulletInventoryItem bulletInventoryItem = bulletItem.AddComponent<BulletInventoryItem>();
-                if(!bulletInventoryItem.Initialize(bulletType))
+                ret = Instantiate(bulletItemPrefab, InventorySystem.transform);
+                BulletInventoryItem bulletInventoryItem = ret.AddComponent<BulletInventoryItem>();
+                if (!bulletInventoryItem.Initialize(bulletType))
                 {
                     Debug.LogError("BulletInventoryItem initialization failed.");
-                    Destroy(bulletItem);
-                    return;
+                    Destroy(ret);
+                    return null;
                 }
 
                 bulletInInventory.Add(bulletInventoryItem);
@@ -201,41 +261,73 @@ public class InventoryManager : MonoBehaviour
                 if (specificType is not FoodType foodType)
                 {
                     Debug.LogError($"食物类型{(FoodType)specificType}错误,无法获取食物道具属性");
-                    return;
+                    return null;
                 }
                 InventoryItem.ItemShape foodItemShape = ItemAttribute.Instance.GetItemShape(itemType, foodType);
                 if (foodItemShape == InventoryItem.ItemShape.NONE)
                 {
                     Debug.LogError($"食物类型{(FoodType)specificType}错误,无法获取食物形状");
-                    return;
+                    return null;
                 }
                 // 获得形状预制体
                 GameObject foodItemPrefab = GetGameobjectByShape(foodItemShape);
                 if (foodItemPrefab == null)
                 {
                     Debug.LogError("物品预制体未找到");
-                    return;
+                    return null;
                 }
                 // 生成物品并添加组件
-                GameObject foodItem = Instantiate(foodItemPrefab, InventorySystem.transform);
-                FoodInventoryItem foodInventoryItem = foodItem.AddComponent<FoodInventoryItem>();
-                if(!foodInventoryItem.Initialize(foodType))
+                ret = Instantiate(foodItemPrefab, InventorySystem.transform);
+                FoodInventoryItem foodInventoryItem = ret.AddComponent<FoodInventoryItem>();
+                if (!foodInventoryItem.Initialize(foodType))
                 {
                     Debug.LogError("FoodInventoryItem initialization failed.");
-                    Destroy(foodItem);
-                    return;
+                    Destroy(ret);
+                    return null;
                 }
 
                 foodInInventory.Add(foodInventoryItem);
                 break;
+            case Item.ItemType.SurroundItem:
+                if (specificType is not SurroundType surroundType)
+                {
+                    Debug.LogError($"环绕物类型{(SurroundType)specificType}错误,无法获取环绕物道具属性");
+                    return null;
+                }
+                InventoryItem.ItemShape surroundItemShape = ItemAttribute.Instance.GetItemShape(itemType, surroundType);
+                if (surroundItemShape == InventoryItem.ItemShape.NONE)
+                {
+                    Debug.LogError($"环绕物类型{(SurroundType)specificType}错误,无法获取环绕物形状");
+                    return null;
+                }
+                // 获得形状预制体
+                GameObject surroundItemPrefab = GetGameobjectByShape(surroundItemShape);
+                if (surroundItemPrefab == null)
+                {
+                    Debug.LogError("物品预制体未找到");
+                    return null;
+                }
+                // 生成物品并添加组件
+                ret = Instantiate(surroundItemPrefab, InventorySystem.transform);
+                SurroundInventoryItem surroundInventoryItem = ret.AddComponent<SurroundInventoryItem>();
+                if (!surroundInventoryItem.Initialize(surroundType))
+                {
+                    Debug.LogError("SurroundInventoryItem initialization failed.");
+                    Destroy(ret);
+                    return null;
+                }
+                // 将生成物体加入管理列表中
+                surroundInInventory.Add(surroundInventoryItem);
+                break;
             default:
                 Debug.LogError($"物品类型{itemType}错误或未实现,无法获取触发器属性");
-                return;
+                return null;
         }
+        return ret;
     }
     public void RemoveFoodItem(FoodInventoryItem foodItem)
-    {   
-        if(foodItem == null)
+    {
+        if (foodItem == null)
         {
             Debug.LogError("移除食物物品失败，物品为空");
             return;
@@ -256,24 +348,15 @@ public class InventoryManager : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("InventoryManager Awake");
         if (Instance == null)
             Instance = this;
         else if (Instance != this)
+        {
             Destroy(gameObject);
-
-        // 初始化变量    
-        gridCells = new();
-        triggerInInventory = new();
-        foodInInventory = new();
-        bulletInInventory = new();
-
-        triggerInInventory.Clear();
-        foodInInventory.Clear();
-        bulletInInventory.Clear();
-        GridPos.rows = rows;
-        GridPos.columns = columns;
+            return;
+        }
         inventoryPanel.GetComponent<GridLayoutGroup>().constraintCount = columns;
-        InitializeGrid();
     }
 
     // 初始化背包网格
@@ -285,13 +368,18 @@ public class InventoryManager : MonoBehaviour
             return;
         }
 
+        if (gridCells != null && gridCells.Count != 0)
+        {
+            Debug.Log("GridCells has been created, no need to create again.");
+            return;
+        }
         gridCells = new();
         for (int i = 0; i < columns; i++)
         {
             for (int j = 0; j < rows; j++)
             {
                 GameObject gridCellObject = Instantiate(gridCellPrefab, inventoryPanel.transform);
-                
+
                 // 创建一个中心点容器
                 GameObject centerContainer = new GameObject("CenterContainer");
                 centerContainer.transform.SetParent(gridCellObject.transform);
@@ -300,17 +388,23 @@ public class InventoryManager : MonoBehaviour
                 centerRect.anchorMax = Vector2.one;
                 centerRect.offsetMin = Vector2.zero;
                 centerRect.offsetMax = Vector2.zero;
-                
+
                 GridCell gridCell = gridCellObject.GetComponent<GridCell>();
                 gridCell.Initialize(new GridPos(j, i));
                 gridCell.centerContainer = centerContainer.transform; // 需要在GridCell类中添加此字段
+                centerContainer.transform.localScale = Vector3.one;
                 gridCells[new GridPos(j, i)] = gridCell;
             }
         }
     }
 
-    // 尝试将物品放入格子中
-    // return : -2_Targetpos未初始化 -1_放置在空白区域  0_放置失败  1_放置成功
+    /// <summary>
+    /// 尝试将物品放入格子中
+    /// </summary>
+    /// <param name="item">放置物品</param>
+    /// <param name="targetCells">目标格子</param>
+    /// <param name="target">返回的放置的格子</param>
+    /// <returns>-2_Targetpos未初始化 -1_放置在空白区域  0_放置失败  1_放置成功</returns>
     public int TryPlaceItemInGrid(InventoryItem item, List<GridCell> targetCells, List<GridPos> target)
     {
         #region 错误检查
@@ -319,22 +413,34 @@ public class InventoryManager : MonoBehaviour
             Debug.LogError("target is null");
             return -2;
         }
-        if(item.GetShape() == InventoryItem.ItemShape.NONE)
+        if (item.GetShape() == InventoryItem.ItemShape.NONE)
         {
             Debug.LogError("物品形状错误");
             return -2;
         }
-        if(item.GetDirection() == InventoryItem.Direction.NONE)
+        if (item.GetDirection() == InventoryItem.Direction.NONE)
         {
             Debug.LogError("物品方向错误");
             return -2;
         }
+        if (targetCells == null || targetCells.Count == 0)
+        {
+            Debug.Log("targetCells is null or empty, put on blank");
+            return -1;
+        }
         #endregion
+
         // 检测鼠标位置
-        var mousePos = GetCellIndex(Input.mousePosition);
-        //put on the blank area
+        Debug.Log("targetCells数量: " + targetCells.Count);
+        foreach (var cell in targetCells)
+        {
+            Debug.Log("cell pos: " + cell.gridPos.gridX + " " + cell.gridPos.gridY);
+        }
+        var mousePos = gameObject.activeInHierarchy ? GetCellIndex(Input.mousePosition) : targetCells[0].GetPos();
+        // put on the blank area
         if (!gridCells.TryGetValue(mousePos, out _))
         {
+            Debug.Log("put in blank area, mouse pos: " + mousePos.gridX + " " + mousePos.gridY);
             item.transform.SetParent(InventorySystem.transform);
             return -1;
         }
@@ -346,14 +452,21 @@ public class InventoryManager : MonoBehaviour
             target.Clear();
             target.AddRange(result);
             GridCell targetCell = gridCells[result[0]];
-            
+
             // 将物品放在中心容器下而不是直接放在格子下
-            item.transform.SetParent(targetCell.centerContainer);
-            
+            item.transform.SetParent(targetCell.centerContainer, false);
+
             // 设置物品位置在容器中心
             RectTransform itemRect = item.GetComponent<RectTransform>();
             itemRect.anchoredPosition = Vector2.zero;
-            
+
+            item.gameObject.SetActive(true);
+            Canvas itemCanvas = item.GetComponent<Canvas>();
+            if (itemCanvas != null)
+            {
+                itemCanvas.overrideSorting = true;
+                itemCanvas.sortingOrder = 1;
+            }
             return 1;
         }
         else    // 放置失败
@@ -385,11 +498,23 @@ public class InventoryManager : MonoBehaviour
     // 根据位置获取格子的索引
     private GridPos GetCellIndex(Vector3 position)
     {
-        foreach (var (gridCellPos, gridCell) in gridCells)
-            if (RectTransformUtility.RectangleContainsScreenPoint(gridCell.GetComponent<RectTransform>(), position))
+        PointerEventData pointerData = new PointerEventData(EventSystem.current)
+        {
+            position = position
+        };
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+
+        // 查找带有GridCell组件的结果
+        foreach (RaycastResult result in results)
+        {
+            GridCell gridCell = result.gameObject.GetComponent<GridCell>();
+            if (gridCell != null)
             {
-                return gridCellPos;
+                return gridCell.gridPos;
             }
+        }
+
         return new GridPos(-1, -1); // 没有找到可放置的格子
     }
 
@@ -531,5 +656,214 @@ public class InventoryManager : MonoBehaviour
             Debug.LogError($"未找到物品预制体：{path}");
         }
         return null;
+    }
+
+    public void StoreInventoryData()
+    {
+        InventoryManagerData data = new InventoryManagerData();
+        data.rows = rows;
+        data.cols = columns;
+
+        // 保存触发器数据
+        foreach (var item in triggerInInventory)
+        {
+            if (item == null) continue;
+
+            InventoryManagerData.TriggerInventoryItemData itemData = new InventoryManagerData.TriggerInventoryItemData();
+            itemData.guid = item.inventoryID.ToString();
+            itemData.blankPos = item.GetComponent<RectTransform>().anchoredPosition;
+            itemData.position = item.GetComponent<InventoryItem>()
+                .GetCurrentLayOnGrid()
+                .Select(gridPos => gridPos.gridPos)
+                .ToList();
+            // 根据触发器类型设置functionType和specificType
+            if (item is FireInventoryTriggerItem fireTrigger)
+            {
+                itemData.functionType = (int)Trigger.TriggerType.ByFireTimes;
+                itemData.specificType = (int)fireTrigger.GetSpecificType();
+            }
+            else if (item is TimeInventoryTriggerItem timeTrigger)
+            {
+                itemData.functionType = (int)Trigger.TriggerType.ByTime;
+                itemData.specificType = (int)timeTrigger.GetSpecificType();
+            }
+
+            data.triggers.Add(itemData);
+        }
+        
+        // 保存食物数据
+        foreach (var item in foodInInventory)
+        {
+            if (item == null) continue;
+            
+            InventoryManagerData.FoodInventoryItemData itemData = new InventoryManagerData.FoodInventoryItemData();
+            itemData.blankPos = item.GetComponent<RectTransform>().anchoredPosition;
+            itemData.guid = item.inventoryID.ToString();
+            itemData.position = item.GetComponent<InventoryItem>()
+                .GetCurrentLayOnGrid()
+                .Select(gridPos => gridPos.gridPos)
+                .ToList();
+            itemData.foodType = (int)item.GetSpecificType();
+            
+            data.foods.Add(itemData);
+        }
+        
+        // 保存子弹数据
+        foreach (var item in bulletInInventory)
+        {
+            if (item == null) continue;
+            
+            InventoryManagerData.BulletInventoryItemData itemData = new InventoryManagerData.BulletInventoryItemData();
+            itemData.guid = item.inventoryID.ToString();
+            itemData.blankPos = item.GetComponent<RectTransform>().anchoredPosition;
+            itemData.position = item.GetComponent<InventoryItem>()
+                .GetCurrentLayOnGrid()
+                .Select(gridPos => gridPos.gridPos)
+                .ToList();
+            foreach(var gridPos in itemData.position)
+            {
+                Debug.Log($"子弹位置: {gridPos.gridX} {gridPos.gridY}");
+            }
+            itemData.bulletType = (int)item.GetSpecificType();
+            
+            data.bullets.Add(itemData);
+        }
+
+        // 保存环绕物数据
+        foreach (var item in surroundInInventory)
+        {
+            if (item == null) continue;
+            
+            InventoryManagerData.SurroundInventoryItemData itemData = new InventoryManagerData.SurroundInventoryItemData();
+            itemData.guid = item.inventoryID.ToString();
+            itemData.blankPos = item.GetComponent<RectTransform>().anchoredPosition;
+            itemData.position = item.GetComponent<InventoryItem>()
+                .GetCurrentLayOnGrid()
+                .Select(gridPos => gridPos.gridPos)
+                .ToList();
+            itemData.surroundType = (int)item.GetSpecificType();
+            
+            data.surrounds.Add(itemData);
+        }
+
+        // 序列化并保存数据
+        string json = JsonUtility.ToJson(data, true);
+        string filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
+        File.WriteAllText(filePath, json);
+        
+        Debug.Log($"背包数据已保存到: {filePath}");
+    }
+
+    public void LoadInventoryData()
+    {
+        // 初始化数据
+        gridCells = new();
+        triggerInInventory = new();
+        foodInInventory = new();
+        bulletInInventory = new();
+        surroundInInventory = new();
+
+        triggerInInventory.Clear();
+        foodInInventory.Clear();
+        bulletInInventory.Clear();
+        surroundInInventory.Clear();
+
+        string filePath;
+        if (PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 1)
+            filePath = Path.Combine(Application.persistentDataPath, inventoryInitDataPath);
+        else
+            filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
+        
+        // filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
+        Debug.Log($"尝试加载背包数据: {filePath}");
+        if (!File.Exists(filePath))
+        {
+            Debug.Log("没有找到背包数据文件");
+            return;
+        }
+        
+        string json = File.ReadAllText(filePath);
+        InventoryManagerData data = JsonUtility.FromJson<InventoryManagerData>(json);
+        // 加载网格
+        InitializeGrid(); 
+
+        // 重新加载物品
+        foreach (var itemData in data.triggers)
+        {
+            Trigger.TriggerType triggerType = (Trigger.TriggerType)itemData.functionType;
+            GameObject item = null;
+            // 根据触发器类型设置functionType和specificType
+            // 生成触发器
+            if (triggerType == Trigger.TriggerType.ByFireTimes)
+            {
+                FireTriggerType fireType = (FireTriggerType)itemData.specificType;
+                item = DropItem(Item.ItemType.TriggerItem, triggerType, fireType);
+            }
+            else if (triggerType == Trigger.TriggerType.ByTime)
+            {
+                TimeTriggerType timeType = (TimeTriggerType)itemData.specificType;
+                item = DropItem(Item.ItemType.TriggerItem, triggerType, timeType);
+            }
+
+            // 设置位置等其他属性
+            if (item != null)
+            {
+                InventoryItem inventoryItem = item.GetComponent<InventoryItem>();
+                inventoryItem.inventoryID = Guid.Parse(itemData.guid); // 设置GUID
+                inventoryItem.triggerDectectFlag = true;
+                if (itemData.position != null && itemData.position.Count > 0)
+                    inventoryItem.TryPlaceItem(itemData.position);
+                else
+                    inventoryItem.GetComponent<RectTransform>().anchoredPosition = itemData.blankPos; // 设置空白区域物体位置
+            }
+            else
+            {
+                Debug.LogError($"无法加载触发器数据: {itemData.guid}");
+                continue;
+            }
+        }
+
+        foreach (var itemData in data.foods)
+        {
+            FoodType foodType = (FoodType)itemData.foodType;
+            GameObject item = DropItem(Item.ItemType.FoodItem, foodType);
+            InventoryItem inventoryItem = item.GetComponent<InventoryItem>();
+            inventoryItem.inventoryID = Guid.Parse(itemData.guid); // 设置GUID
+            inventoryItem.triggerDectectFlag = true;
+            if (itemData.position != null && itemData.position.Count > 0)
+                inventoryItem.TryPlaceItem(itemData.position);
+            else
+                inventoryItem.GetComponent<RectTransform>().anchoredPosition = itemData.blankPos; // 设置空白区域物体位置
+        }
+        
+        foreach (var itemData in data.bullets)
+        {
+            BulletType bulletType = (BulletType)itemData.bulletType;
+            GameObject item = DropItem(Item.ItemType.BulletItem, bulletType);
+            InventoryItem inventoryItem = item.GetComponent<InventoryItem>();
+            inventoryItem.inventoryID = Guid.Parse(itemData.guid);
+            inventoryItem.triggerDectectFlag = true;
+            if (itemData.position != null && itemData.position.Count > 0)
+                inventoryItem.TryPlaceItem(itemData.position);
+            else
+                inventoryItem.GetComponent<RectTransform>().anchoredPosition = itemData.blankPos; // 设置空白区域物体位置
+        }
+
+        foreach (var itemData in data.surrounds)
+        {
+            SurroundType surroundType = (SurroundType)itemData.surroundType;
+            GameObject item = DropItem(Item.ItemType.SurroundItem, surroundType);
+            InventoryItem inventoryItem = item.GetComponent<InventoryItem>();
+            inventoryItem.inventoryID = Guid.Parse(itemData.guid); // 设置GUID
+            inventoryItem.triggerDectectFlag = true;
+            if (itemData.position != null && itemData.position.Count > 0)
+                inventoryItem.TryPlaceItem(itemData.position);
+            else
+                inventoryItem.GetComponent<RectTransform>().anchoredPosition = itemData.blankPos; // 设置空白区域物体位置
+        }
+
+        // 触发器检测
+        TriggerTriggerItem();
+        Debug.Log($"背包数据已加载: {filePath}");
     }
 }

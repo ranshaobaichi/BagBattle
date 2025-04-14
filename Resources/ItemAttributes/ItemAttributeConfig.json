@@ -1,0 +1,66 @@
+{
+    "triggerAttribute": {
+        "fireTriggerAttributes": [],
+        "timeTriggerAttributes": [
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 1,
+                    "triggerTime": 3.0,
+                    "timeTriggerType": 0
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            }
+        ]
+    },
+    "bulletAttribute": {
+        "bulletAttributes": [
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "bulletItemAttribute": {
+                    "specificBulletType": 0,
+                    "bulletType": 1,
+                    "bulletCount": 1
+                }
+            }
+        ]
+    },
+    "foodAttribute": {
+        "foodAttributes": [
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 0,
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 1,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 10.0
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "surroundAttribute": {
+        "surroundAttributes": [
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "surroundItemAttribute": {
+                    "specificSurroundType": 0,
+                    "summonedSurroundingType": 1,
+                    "surroundingCount": 1,
+                    "surroundingDuration": 1.0,
+                    "surroundingSpeedPercent": 1.0,
+                    "surroundingPrefab": {
+                        "instanceID": 0
+                    }
+                }
+            }
+        ]
+    }
+}

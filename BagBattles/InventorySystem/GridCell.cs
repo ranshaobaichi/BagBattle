@@ -33,12 +33,14 @@ public class GridCell : MonoBehaviour
     }
     public void SetNormal()
     {
+        if (cellImage == null || canvas == null) return;
         cellImage.color = Color.white;
         canvas.sortingOrder = 0; // 恢复格子排序
     }
     public void SetHighlight() => cellImage.color = new Color(0.5f, 1, 0.4f, 0.4f);
     public void SetInvalid()
     {
+        if (cellImage == null || canvas == null) return;
         canvas.sortingOrder = 2; // 提升格子排序
         cellImage.color = new Color(1, 0, 0, 0.5f);
     }

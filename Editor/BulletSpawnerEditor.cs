@@ -233,29 +233,6 @@ public class BulletSpawnerEditor : Editor
         
         EditorGUILayout.EndVertical();
         
-        // 添加测试按钮（仅游戏运行时可用）
-        if (Application.isPlaying)
-        {
-            EditorGUILayout.Space(5);
-            EditorGUILayout.BeginHorizontal();
-            
-            if (GUILayout.Button("添加测试加成", GUILayout.Height(25)))
-            {
-                // 添加一些测试加成
-                bulletSpawner.AddTemporaryAddDamage(5f, 3);
-                bulletSpawner.AddTemporaryPercentageDamage(0.2f, 2);
-                bulletSpawner.AddTemporaryAttackSpeed(0.1f, 1);
-                bulletSpawner.AddTemporaryLoadSpeed(0.05f, 4);
-            }
-            
-            if (GUILayout.Button("减少回合", GUILayout.Height(25)))
-            {
-                bulletSpawner.DecreaseTemporaryBonus();
-            }
-            
-            EditorGUILayout.EndHorizontal();
-        }
-        
         // 添加清除按钮
         EditorGUILayout.Space(5);
         GUI.backgroundColor = new Color(1.0f, 0.7f, 0.7f); // 轻微的红色背景
@@ -298,12 +275,12 @@ public class BulletSpawnerEditor : Editor
             EditorGUILayout.LabelField($"{label}: {bonus.bonusValue}", GUILayout.Width(150));
             
             // 用颜色标记剩余回合数
-            if (bonus.roundLeft <= 1)
+            if (bonus.timeLeft <= 1)
                 GUI.color = Color.red;
-            else if (bonus.roundLeft <= 2)
+            else if (bonus.timeLeft <= 2)
                 GUI.color = Color.yellow;
                 
-            EditorGUILayout.LabelField($"剩余回合: {bonus.roundLeft}");
+            EditorGUILayout.LabelField($"剩余回合: {bonus.timeLeft}");
             GUI.color = Color.white;
             
             EditorGUILayout.EndHorizontal();

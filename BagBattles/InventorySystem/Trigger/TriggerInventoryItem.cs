@@ -62,7 +62,7 @@ public abstract class TriggerInventoryItem : InventoryItem
             return false;
         }
         List<InventoryItem> ContainItems = new List<InventoryItem>(); // 触发器检测到的物品
-        triggerItems.Clear();
+        triggerItems = new();
         // 触发逻辑
         switch (triggerRange)
         {
@@ -143,6 +143,10 @@ public abstract class TriggerInventoryItem : InventoryItem
                         }
                         ContainItems.Add(tmp);
                         tmp.triggerDectectFlag = false; // 触发器检测到物品后，设置该物品不可被触发器检测
+                    }
+                    else
+                    {
+                        Debug.Log($"检测到({basePos.gridX},{basePos.gridY})物品但是由于为null或触发标志为false");
                     }
                     basePos.gridY--;
                     cellCount--;

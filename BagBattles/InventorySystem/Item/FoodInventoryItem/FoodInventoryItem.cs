@@ -4,7 +4,7 @@ using Assets.BagBattles.Types;
 
 public class FoodInventoryItem : InventoryItem
 {
-    public FoodType foodType = FoodType.None;
+    public FoodType foodType;
     public FoodInventoryItem() => itemType = Item.ItemType.FoodItem;
     public override object GetSpecificType() => foodType;
     public override bool Initialize(object foodType)
@@ -26,6 +26,7 @@ public class FoodInventoryItem : InventoryItem
             return false;
         }
         UnityEngine.Debug.Log($"食物道具种类：{type} 形状：{itemShape}");
+        triggerDectectFlag = true;
 
         return true;
     }

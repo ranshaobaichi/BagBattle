@@ -86,7 +86,7 @@ public class TriggerItemEditor : Editor
                             //         EditorGUILayout.LabelField($"加成类型: {attr.foodBonusType}");
                             //         EditorGUILayout.LabelField($"加成值: {attr.foodBonusValue}");
                             //         EditorGUILayout.LabelField($"持续类型: {attr.foodDurationType}");
-                            //         EditorGUILayout.LabelField($"持续回合: {attr.roundLeft}");
+                            //         EditorGUILayout.LabelField($"持续回合: {attr.timeLeft}");
                             //     }
                             // }
                             

@@ -3,8 +3,8 @@ using UnityEngine;
 public class InventorySystem : MonoBehaviour
 {
     // Start is called before the first frame update
-    public static InventorySystem Instance { get; private set; }
-    private void Awake()
+    public static InventorySystem Instance { get; set; }
+    public void Awake()
     {
         if (Instance == null)
         {
@@ -17,5 +17,4 @@ public class InventorySystem : MonoBehaviour
         }
     }
     void Start() => DontDestroyOnLoad(gameObject);
-    public void SetActive(bool isActive) => gameObject.SetActive(isActive);
 }

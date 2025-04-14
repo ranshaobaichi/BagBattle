@@ -1,0 +1,58 @@
+{
+    "waves": [
+        {
+            "waveId": 1,
+            "startTime": 0,
+            "holdTime": 35.0,
+            "enemies": [
+                {
+                    "enemyType": 0,
+                    "spawnCount": 1,
+                    "spawnTime": 3.0,
+                    "isGroup": false,
+                    "intensity": 1.0,
+                    "random": true,
+                    "isDefault": true,
+                    "startTime": 0.0,
+                    "holdTime": 0.0
+                }
+            ]
+        },
+        {
+            "waveId": 2,
+            "startTime": 0,
+            "holdTime": 35.0,
+            "enemies": [
+                {
+                    "enemyType": 0,
+                    "spawnCount": 8,
+                    "spawnTime": 5.0,
+                    "isGroup": false,
+                    "intensity": 1.0,
+                    "random": true,
+                    "isDefault": false,
+                    "startTime": 0.0,
+                    "holdTime": 0.0
+                }
+            ]
+        },
+        {
+            "waveId": 3,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
+        },
+        {
+            "waveId": 4,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
+        },
+        {
+            "waveId": 5,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
+        }
+    ]
+}

@@ -10,12 +10,11 @@ namespace Assets.BagBattles.Types
     /// </summary>
     public enum FireTriggerType
     {
-        /// <summary>
-        /// 开火一次触发，范围为邻近1格
-        /// </summary>
-        Name_1_1,
+        Type1,
         Type2,
         Type3,
+        Type4,
+        Type5,
     }
 
     public enum TimeTriggerType
@@ -26,6 +25,8 @@ namespace Assets.BagBattles.Types
         Type1,
         Type2,
         Type3,
+        Type4,
+        Type5,
     }
     #endregion
 
@@ -33,17 +34,17 @@ namespace Assets.BagBattles.Types
     [Serializable]
     public enum FoodType
     {
-        None,
         Type1,
         Type2,
         Type3,
+        Type4,
+        Type5,
     }
     #endregion
 
     #region BulletType
     public enum BulletType
     {
-        None,
         Normal_Bullet_Single,
         Spear_Bullet_Single,
         Rocket_Bullet_Single,
@@ -53,7 +54,21 @@ namespace Assets.BagBattles.Types
         Swallow_Bullet_Single,
         Bomb_Bullet_Single,
         Jump_Bullet_Single,
-        Split_Bullet_Single
+        Split_Bullet_Single,
+        Type1,
+        Type2,
+        Type3,
+        Type4,
+        Type5,
     }
+    #endregion
+
+    #region SurroundType
+    public enum SurroundType
+    {
+        SingleFireBall,
+        SingleElectricityBall,
+    }
+
     #endregion
 }

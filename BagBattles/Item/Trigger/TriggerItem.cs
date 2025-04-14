@@ -7,14 +7,14 @@ public abstract class TriggerItem : MonoBehaviour
 {
     [Header("触发器类道具")]
     public Dictionary<Item.ItemType, List<Item>> items = new Dictionary<Item.ItemType, List<Item>>();    // 触发器可触发的物品
-
     #region 虚方法
     protected abstract void InitializeAttr(object specificType); // 初始化触发器属性
     public abstract void StartTrigger();
     public abstract void StopTrigger(); // 停用触发器
     public abstract Trigger.TriggerType GetTriggerType(); // 触发器触发物品
+    public abstract object GetSpecificTriggerType();
+    public Guid sourceTriggerInventoryItemGuid; // 触发器对应的仓库物品ID
     #endregion
-
 
     public void LaunchTrigger()
     {
@@ -32,14 +32,16 @@ public abstract class TriggerItem : MonoBehaviour
         else
             Debug.Log("触发器没有物品可用");
     }
-    public void Initialize(object specificType, Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>> triggerItem)
+    public void Initialize(Guid guid, object specificType, Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>> triggerItem)
     {
         // 初始化触发器属性
         InitializeAttr(specificType);
+        sourceTriggerInventoryItemGuid = guid;
 
         // 初始化触发器物品字典
         items[Item.ItemType.BulletItem] = new();
         items[Item.ItemType.FoodItem] = new();
+        items[Item.ItemType.SurroundItem] = new();
 
         // 初始化触发器物品
         foreach (var (itemKey, itemValue) in triggerItem)
@@ -74,9 +76,23 @@ public abstract class TriggerItem : MonoBehaviour
                         tmp.SetSourceInventoryItem(inventorySource);
                         foreach (var food in tmp.foodItemAttributes.foodItemAttributes)
                         {
-                            Debug.Log($"食物道具属性：{food.foodBonusType} {food.foodBonusValue} {food.foodDurationType} {food.roundLeft}");
+                            Debug.Log($"食物道具属性：{food.foodBonusType} {food.foodBonusValue} {food.foodDurationType} {food.timeLeft}");
                         }
                         items[Item.ItemType.FoodItem].Add(tmp);
+                    }
+                    break;
+                case Item.ItemType.SurroundItem:
+                    Debug.Log($"触发器初始化了{itemValue.Count}个环绕物道具");
+                    foreach (var (inventorySource, value) in itemValue)
+                    {
+                        if (value is not SurroundType surroundType)
+                        {
+                            Debug.LogError("触发器绑定了无效的环绕物类型" + value);
+                            continue;
+                        }
+                        SurroundItem tmp = new(surroundType);
+                        tmp.SetSourceInventoryItem(inventorySource);
+                        items[Item.ItemType.SurroundItem].Add(tmp);
                     }
                     break;
                 default:
@@ -102,11 +118,11 @@ public abstract class TriggerItem : MonoBehaviour
                 flag = true;
                 item.UseItem();
             }
-            if (itemList.Key == Item.ItemType.FoodItem)
-            {
-                items[Item.ItemType.FoodItem].Clear();
-                items.Remove(Item.ItemType.FoodItem);
-            }
+        }
+        if (items.ContainsKey(Item.ItemType.FoodItem))
+        {
+            items[Item.ItemType.FoodItem].Clear();
+            items.Remove(Item.ItemType.FoodItem);
         }
         if (!flag)
         {

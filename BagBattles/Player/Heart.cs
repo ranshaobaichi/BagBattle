@@ -45,7 +45,10 @@ public class Heart : MonoBehaviour
 
     private void UpdateDisplay()
     {
-        image.sprite  = currentHealth switch
+        Debug.Log($"当前生命值: {currentHealth}");
+        if (image == null)
+            image = GetComponent<Image>();
+        image.sprite = currentHealth switch
         {
             0 => heart[0],
             1 => heart[1],

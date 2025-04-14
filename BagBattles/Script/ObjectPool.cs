@@ -2,12 +2,12 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class ObjectPool
+public class ObjectPool : MonoBehaviour
 {
     private static ObjectPool instance;
-    private Dictionary<string, ObjectPool<GameObject>> objectPools = new Dictionary<string, ObjectPool<GameObject>>();  // 用 Unity 的 ObjectPool 替代 Stack
-    private Dictionary<string, Transform> poolParents = new Dictionary<string, Transform>(); // 记录对象池的父物体
-    private GameObject poolRoot; // 总对象池的根节点
+    private Dictionary<string, IObjectPool<GameObject>> objectPools = new Dictionary<string, IObjectPool<GameObject>>();
+    private Dictionary<string, Transform> poolParents = new Dictionary<string, Transform>();
+    private GameObject poolRoot;
 
     public static ObjectPool Instance
     {
@@ -15,89 +15,103 @@ public class ObjectPool
         {
             if (instance == null)
             {
-                instance = new ObjectPool();
+                // 查找现有的实例或创建一个新的
+                instance = FindObjectOfType<ObjectPool>();
+                if (instance == null)
+                {
+                    GameObject go = new GameObject("ObjectPool");
+                    instance = go.AddComponent<ObjectPool>();
+                    // DontDestroyOnLoad(go); // 保持对象池在场景切换时不被销毁
+                }
             }
             return instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            poolRoot = gameObject;
+            // DontDestroyOnLoad(gameObject);
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
         }
     }
 
     // 获取对象
     public GameObject GetObject(GameObject prefab)
     {
-        string key = prefab.name;
-
-        // 确保对象池的根节点存在
-        if (poolRoot == null)
+        if (prefab == null)
         {
-            poolRoot = new GameObject("ObjectPool");
+            Debug.LogError("尝试从对象池获取空prefab!");
+            return null;
         }
+
+        string key = prefab.name;
 
         // 确保子池存在
         if (!poolParents.TryGetValue(key, out Transform parent))
         {
             GameObject childPool = new GameObject(key + "Pool");
-            childPool.transform.SetParent(poolRoot.transform);
+            childPool.transform.SetParent(transform);
             poolParents[key] = childPool.transform;
             parent = childPool.transform;
         }
 
         // 如果池子里有对象，直接取出
-        if (objectPools.TryGetValue(key, out ObjectPool<GameObject> pool))
+        if (objectPools.TryGetValue(key, out IObjectPool<GameObject> pool))
         {
             GameObject obj = pool.Get();
-            // 如果对象被销毁或无效，创建一个新的对象
-            if (obj == null || !obj.activeInHierarchy)
-            {
-                obj = CreateNewObject(prefab, parent);
-            }
-            obj.SetActive(true);
-            return obj;
+            return obj; // ObjectPool.Get()已激活对象
         }
         else
         {
-            // 如果没有对象池，为该 prefab 创建一个新的对象池
-            var newPool = new ObjectPool<GameObject>(
-                () => CreateNewObject(prefab, parent),  // 创建新对象的方法
-                obj => { if (obj != null) obj.SetActive(false); },            // 回收对象的方法
-                obj => { if (obj != null) Object.Destroy(obj); }  // 销毁对象的方法
+            // 创建新对象池
+            IObjectPool<GameObject> newPool = new ObjectPool<GameObject>(
+                createFunc: () => CreateNewObject(prefab, parent),
+                actionOnGet: (obj) => obj.SetActive(true),
+                actionOnRelease: (obj) => obj.SetActive(false),
+                actionOnDestroy: (obj) => Destroy(obj),
+                collectionCheck: false,
+                defaultCapacity: 10,
+                maxSize: 100
             );
+            
             objectPools[key] = newPool;
-
-            // 获取对象
-            return newPool.Get();
+            GameObject obj = newPool.Get();
+            return obj;
         }
     }
 
     // 创建新对象
     private GameObject CreateNewObject(GameObject prefab, Transform parent)
     {
-        GameObject newObj = GameObject.Instantiate(prefab);
+        GameObject newObj = Instantiate(prefab, parent);
         newObj.name = prefab.name; // 避免 "(Clone)" 后缀
-        newObj.transform.SetParent(parent);
         return newObj;
     }
 
     // 回收对象
     public void PushObject(GameObject obj)
     {
-        if (obj == null || !obj.activeInHierarchy)
+        if (obj == null)
         {
             return;
         }
 
         string key = obj.name;
 
-        // 查找对应的对象池
-        if (objectPools.ContainsKey(key))
+        if (objectPools.TryGetValue(key, out IObjectPool<GameObject> pool))
         {
-            obj.SetActive(false);
-            ObjectPool<GameObject> pool = objectPools[key];
-            pool.Release(obj);
+            pool.Release(obj); // Release会自动设置inactive
         }
         else
         {
-            UnityEngine.Object.Destroy(obj);  // 如果没有找到池，直接销毁
+            Destroy(obj);
         }
     }
 }
-

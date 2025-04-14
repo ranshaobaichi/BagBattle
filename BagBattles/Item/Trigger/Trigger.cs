@@ -1,7 +1,7 @@
 using System;
-using System.ComponentModel;
 using UnityEngine;
 using Assets.BagBattles.Types;
+using Unity.Collections;
 
 [Serializable]
 public class Trigger
@@ -73,8 +73,9 @@ public class Trigger
     [Serializable]
     public class TimeTriggerAttribute : BaseTriggerAttribute
     {
-        [Tooltip("触发间隔(秒)")]
-        public float triggerTime = 1.0f;
+        [Tooltip("触发间隔(秒)")] public float triggerTime = 1.0f;
+        [Header("时间触发器名称")]
+        [Assets.Editor.ItemAttributeDrawer.ReadOnly] public TimeTriggerType timeTriggerType;
         public TimeTriggerAttribute() : base(TriggerType.ByTime) { }
     }
 
@@ -82,8 +83,9 @@ public class Trigger
     [Serializable]
     public class FireCountTriggerAttribute : BaseTriggerAttribute
     {
-        [Tooltip("触发所需的开火次数")]
-        public int fireCount = 0;
+        [Tooltip("触发所需的开火次数")] public int fireCount = 0;
+        [Header("开火次数触发器名称")]
+        [Assets.Editor.ItemAttributeDrawer.ReadOnly] public FireTriggerType fireTriggerType;
         public FireCountTriggerAttribute() : base(TriggerType.ByFireTimes) { }
     }
 

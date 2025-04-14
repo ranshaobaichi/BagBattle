@@ -26,6 +26,7 @@ public class BulletInventoryItem : InventoryItem
             return false;
         }
         Debug.Log($"子弹道具种类：{type} 形状：{itemShape}");
+        triggerDectectFlag = true;
         return true;
     }
 }

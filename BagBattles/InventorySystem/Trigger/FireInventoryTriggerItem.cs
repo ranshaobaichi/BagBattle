@@ -32,6 +32,7 @@ public class FireInventoryTriggerItem : TriggerInventoryItem
             return false;
         }
 
+        triggerDectectFlag = true;
         Debug.Log($"触发器种类：{fireTriggerType} 触发器范围：{triggerRange}");
         return true;
     }

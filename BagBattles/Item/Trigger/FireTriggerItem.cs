@@ -3,6 +3,7 @@ public class FireTriggerItem : TriggerItem
 {
     private Trigger.FireCountTriggerAttribute fireTriggerAttribute;
     public override Trigger.TriggerType GetTriggerType() => fireTriggerAttribute.triggerType;
+    public override object GetSpecificTriggerType() => fireTriggerAttribute.fireTriggerType;
     private int currentFireCount = 0;
 
     protected override void InitializeAttr(object specificType)
