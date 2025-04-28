@@ -17,7 +17,8 @@ public class InventoryManagerEditor : Editor
     private FoodType selectedFoodType;
     // 环绕物类型
     private SurroundType selectedSurroundType;
-
+    // 其他道具类型
+    private OtherType selectedOtherType;
     private bool selected = false;
 
     public override void OnInspectorGUI()
@@ -94,6 +95,18 @@ public class InventoryManagerEditor : Editor
                 // }
                 EditorGUI.indentLevel--;
                 break;
+            case Item.ItemType.OtherItem:
+                EditorGUI.indentLevel++;
+                selectedOtherType = (OtherType)EditorGUILayout.EnumPopup("其他道具类型", selectedOtherType);
+                selected = true;
+                // 通用处理方式
+                // if (selectedOtherType == OtherType.None)
+                // {
+                //     selected = false;
+                //     EditorGUILayout.HelpBox("请选择其他道具类型", MessageType.Warning);
+                // }
+                EditorGUI.indentLevel--;
+                break;
             
         }
 
@@ -132,6 +145,9 @@ public class InventoryManagerEditor : Editor
                     break;
                 case Item.ItemType.SurroundItem:
                     inventoryManager.DropItem(selectedItemType, selectedSurroundType);
+                    break;
+                case Item.ItemType.OtherItem:
+                    inventoryManager.DropItem(selectedItemType, selectedOtherType);
                     break;
                 default:
                     Debug.LogError("未实现的物品类型");

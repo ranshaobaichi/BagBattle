@@ -54,6 +54,7 @@ public class Trigger
     {
         [Tooltip("按时间触发")] ByTime,
         [Tooltip("按开火次数触发")] ByFireTimes,
+        [Tooltip("其他触发器触发")] ByOtherTrigger,
     }
 
     // 基础抽象类
@@ -62,6 +63,7 @@ public class Trigger
     {
         [Tooltip("触发范围")] public TriggerRange triggerRange;
         readonly public TriggerType triggerType;
+        public string description;
         protected BaseTriggerAttribute(TriggerType type)
         {
             triggerType = type;
@@ -87,6 +89,15 @@ public class Trigger
         [Header("开火次数触发器名称")]
         [Assets.Editor.ItemAttributeDrawer.ReadOnly] public FireTriggerType fireTriggerType;
         public FireCountTriggerAttribute() : base(TriggerType.ByFireTimes) { }
+    }
+
+    [Serializable]
+    public class ByOtherTriggerAttribute : BaseTriggerAttribute
+    {
+        [Tooltip("触发时所需其他触发器触发次数")] public int requiredTriggerCount;
+        [Header("其他触发器触发名称")]
+        [Assets.Editor.ItemAttributeDrawer.ReadOnly] public ByOtherTriggerType byOtherTriggerType;
+        public ByOtherTriggerAttribute() : base(TriggerType.ByOtherTrigger) { }
     }
 
     // // 兼容旧代码的属性 - 这个可以后面逐步移除

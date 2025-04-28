@@ -19,6 +19,7 @@ public class FoodInventoryItem : InventoryItem
         // 形状设置
         itemShape = ItemAttribute.Instance.GetItemShape(itemType, type);
         InitializeDirection(ItemAttribute.Instance.GetItemDirection(itemType, type));
+        description = ItemAttribute.Instance.GetDescription(itemType, type);
         if (itemShape == InventoryItem.ItemShape.NONE ||
             itemDirection == InventoryItem.Direction.NONE)
         {

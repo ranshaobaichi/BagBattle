@@ -6,6 +6,7 @@ public class SurroundItem : Item
     [Header("子弹类道具")]
     public SurroundItemAttribute surroundAttribute;
     private Surrounding surrounding;    // 实例化的环绕物
+    public void DestroySurroundItem() => surrounding?.DestroySurrounding(); // 归还对象池
 
     public SurroundItem(SurroundType surroundType)
     {

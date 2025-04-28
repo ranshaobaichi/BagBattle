@@ -64,11 +64,17 @@ public class HealthController : MonoBehaviour
     void Start()
     {
         if (PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 1)
+        {
             PrewarmPool();
+            StoreHealthData();
+        }
     }
 
     private void PrewarmPool()
     {
+        Hearts ??= new();
+        Armors ??= new();
+
         HealthUp(maxHearts);
         currentHeart = Hearts.Last;
         ArmorUp(initArmors);
@@ -134,7 +140,24 @@ public class HealthController : MonoBehaviour
     }
 
     /// <summary>
-    /// 增加血量
+    /// 回复血量
+    /// /// </summary>
+    /// <param name="value"> 回复血量数值 </param>
+    public void HealthRecover(int value)
+    {
+        if (currentHeart == null) return;
+        while (value > 0)
+        {
+            value -= currentHeart.Value.RecoverHealth(value);
+            if (currentHeart.Value.FullHealth && value > 0 && currentHeart.Next != null)
+            {
+                currentHeart = currentHeart.Next;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 增加血量颗数
     /// </summary>
     /// <param name="value"> 血量增加颗数 </param>
     /// <param name="health"> 每颗血量增加数值 </param>
@@ -149,6 +172,8 @@ public class HealthController : MonoBehaviour
             heart.transform.SetAsFirstSibling();
             Hearts.AddFirst(heart);
         }
+
+        Debug.Log("HealthUp: " + Hearts.Count);
     }
 
     public void HealthDown(int value)
@@ -219,6 +244,9 @@ public class HealthController : MonoBehaviour
                     return;
                 }
                 break;
+            case Food.FoodBonusType.HealthRecover:
+                HealthRecover((int)value);
+                break;
             case Food.FoodBonusType.HealthDown:
                 if (foodDurationType == Food.FoodDurationType.Permanent)
                     HealthDown((int)value);
@@ -250,12 +278,6 @@ public class HealthController : MonoBehaviour
         // 清除临时加成
         ArmorDown((int)temporaryArmorBonus.DecreaseRounds());
     }
-
-    private void OnDestroy()
-    {
-
-    }
-
     public void StoreHealthData()
     {
         HealthData healthData = new()
@@ -273,6 +295,7 @@ public class HealthController : MonoBehaviour
             }
         };
 
+        Debug.Log("血量格数：" + Hearts.Count);
         var healthNode = Hearts.Last;
         while (healthNode != null)
         {

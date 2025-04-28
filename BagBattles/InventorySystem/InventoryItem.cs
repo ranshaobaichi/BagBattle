@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Assets.BagBattles.Types;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,7 +8,7 @@ using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 // BUG：添加basePoint（预制体中），用来规定物体放置中心点
-public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Serializable]
     public enum Direction
@@ -54,7 +55,8 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
     #region 道具属性
     [Tooltip("道具类型")] protected Item.ItemType itemType;
-    [HideInInspector] public bool triggerDectectFlag; // 可否被触发器检测标志位
+    public bool triggerDectectFlag; // 可否被触发器检测标志位
+    protected string description;
     #endregion
 
     #region 对外接口
@@ -68,6 +70,7 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
     /// </summary>
     public abstract bool Initialize(object type); // 初始化物品
     public abstract object GetSpecificType();
+    public string GetDescription() => description; // 获取物品描述
     #endregion
 
     protected void InitializeDirection(Direction direction)
@@ -131,6 +134,70 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
         // 可以被触发器检测标志
         triggerDectectFlag = true;
+    }
+
+    // 鼠标进入物品时显示提示
+    // 在OnPointerEnter方法中实现
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (TooltipManager.Instance != null)
+        {
+            switch (itemType)
+            {
+                case Item.ItemType.BulletItem:
+                    var bulletType = (BulletType)GetSpecificType();
+                    if (ItemAttribute.Instance.GetAttribute(itemType, bulletType) is BulletItemAttribute bulletAttr)
+                        TooltipManager.Instance.ShowBulletTooltip(bulletAttr);
+                    break;
+
+                case Item.ItemType.FoodItem:
+                    var foodType = (FoodType)GetSpecificType();
+                    if (ItemAttribute.Instance.GetAttribute(itemType, foodType) is FoodItemAttribute foodAttr)
+                        TooltipManager.Instance.ShowFoodTooltip(foodAttr);
+                    break;
+
+                case Item.ItemType.SurroundItem:
+                    var surroundType = (SurroundType)GetSpecificType();
+                    if (ItemAttribute.Instance.GetAttribute(itemType, surroundType) is SurroundItemAttribute surroundAttr)
+                        TooltipManager.Instance.ShowSurroundTooltip(surroundAttr);
+                    break;
+
+                case Item.ItemType.TriggerItem:
+                    if (this is TriggerInventoryItem triggerInventoryItem)
+                    {
+                        Trigger.TriggerType triggertype = triggerInventoryItem.GetTriggerType();
+                        switch (triggertype)
+                        {
+                            case Trigger.TriggerType.ByFireTimes:
+                                var fireTriggerType = (FireTriggerType)GetSpecificType();
+                                if (ItemAttribute.Instance.GetAttribute(itemType, fireTriggerType) is Trigger.FireCountTriggerAttribute fireAttr)
+                                    TooltipManager.Instance.ShowFireTriggerTooltip(fireAttr);
+                                break;
+
+                            case Trigger.TriggerType.ByTime:
+                                var timeTriggerType = (TimeTriggerType)GetSpecificType();
+                                if (ItemAttribute.Instance.GetAttribute(Item.ItemType.TriggerItem, triggertype, timeTriggerType) is Trigger.TimeTriggerAttribute timeAttr)
+                                    TooltipManager.Instance.ShowTimeTriggerTooltip(timeAttr);
+                                break;
+                        }
+                    }
+                    break;
+
+                case Item.ItemType.OtherItem:
+                    var otherType = (OtherType)GetSpecificType();
+                    if (ItemAttribute.Instance.GetAttribute(itemType, otherType) is OtherItemAttribute otherAttr)
+                        TooltipManager.Instance.ShowOtherTooltip(otherAttr);
+                    break;
+            }
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (triggerDectectFlag && TooltipManager.Instance != null)
+        {
+            TooltipManager.Instance.HideTooltip();
+        }
     }
 
     // 开始拖动

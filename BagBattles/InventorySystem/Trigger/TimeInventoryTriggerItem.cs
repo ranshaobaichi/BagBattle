@@ -17,6 +17,7 @@ public class TimeInventoryTriggerItem : TriggerInventoryItem
 
         itemShape = ItemAttribute.Instance.GetItemShape(itemType, triggerType, timeTriggerType);
         triggerRange = ItemAttribute.Instance.GetTriggerRange(triggerType, timeTriggerType);
+        description = ItemAttribute.Instance.GetDescription(itemType, triggerType, timeTriggerType);
         InitializeDirection(ItemAttribute.Instance.GetItemDirection(itemType, triggerType, timeTriggerType));
         if (itemShape == InventoryItem.ItemShape.NONE ||
            itemDirection == InventoryItem.Direction.NONE)

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -19,7 +20,12 @@ public class StartGame : MonoBehaviour
         continueGameButton.onClick.AddListener(ContinueGame);
         quitGameButton.onClick.AddListener(QuitGame);
         if (PlayerPrefs.GetInt(PlayerPrefsKeys.HAS_REMAINING_GAME_KEY) == 0)
+        {
             continueGameButton.interactable = false; // 如果没有剩余游戏，禁用继续游戏按钮
+            var col = continueGameButton.GetComponentInChildren<TextMeshProUGUI>().color;
+            col.a = 0.3f;
+            continueGameButton.GetComponentInChildren<TextMeshProUGUI>().color = col; // 设置透明度
+        }
         else
             continueGameButton.interactable = true; // 否则启用继续游戏按钮
     }

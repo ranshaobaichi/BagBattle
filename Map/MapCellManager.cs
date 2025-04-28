@@ -117,6 +117,8 @@ public class MapCellManager : MonoBehaviour
 
                 mapCells[playerPosX, playerPosY].Initialize(playerPosX, playerPosY, false, MapCell.CellType.Battle); // 设置玩家格子
                 Debug.Log($"已从Resources加载地图数据，玩家位置: ({playerPosX}, {playerPosY})");
+                Debug.Log($"玩家格子选取状态：{mapCells[playerPosX, playerPosY].IsSelected()}");
+
                 dataLoaded = true;
             }
             catch (System.Exception e)
@@ -129,8 +131,8 @@ public class MapCellManager : MonoBehaviour
         if (!dataLoaded)
         {
             Debug.Log("未找到地图数据，创建新的地图数据");
-            PlayerPrefs.Save(); // 保存PlayerPrefs
             StoreMapCellData();
+            mapCells[playerPosX, playerPosY].Initialize(playerPosX, playerPosY, false, MapCell.CellType.Battle); // 设置玩家格子
         }
         SetPlayerPosition(playerPosX, playerPosY); // 设置玩家位置
         UpdateInteractableCells(); // 更新可交互格子
@@ -243,7 +245,7 @@ public class MapCellManager : MonoBehaviour
 
                     // 检查列是否在地图范围内，且不是玩家当前位置
                     if (currentCol < 0 || currentCol >= mapColumns || currentCol < playerPosY) continue;
-                    if (rowOffset == 0 && colOffset == 0) continue; // 跳过玩家当前位置
+                    // if (rowOffset == 0 && colOffset == 0) continue; // 跳过玩家当前位置
 
                     // 曼哈顿距离刚好是 |rowOffset| + |colOffset|，已通过上面的逻辑保证不超过walkLength
                     mapCells[currentRow, currentCol].SetInteractable(false);

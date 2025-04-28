@@ -52,7 +52,7 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
 
     [Header("Trigger&Item")]
-    [SerializeField] public List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
+    public List<TriggerItem> triggerItems = new List<TriggerItem>(); // 角色拥有的触发器
     public GameObject triggerGameObject; //承载触发器子物体
     // private List<Item> items = new(); // 角色拥有的物品
     private int face;
@@ -113,6 +113,21 @@ public class PlayerController : MonoBehaviour
         rb.velocity = Vector2.zero;
         StopAllCoroutines();
         gameObject.SetActive(false);
+
+        BulletSpawner.Instance.EndFire();
+        // 结束并清除触发器
+        DestroyAllTriggers();
+
+        
+        // 结束枪械模组
+        Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();
+        foreach (var item in triggerComponents)
+        {
+            Destroy(item);
+        }
+        // 移除临时加成
+        DecreaseTemporaryBonus();
+        HealthController.Instance.DecreaseTemporaryBonus();
     }
     public bool Live() => live; // 角色是否存活
     public void SetActive(bool active) => gameObject.SetActive(active); // 设置角色是否激活
@@ -152,20 +167,6 @@ public class PlayerController : MonoBehaviour
         invincible_flag = false;
         invincible_timer = 0.0f;
         face = 0;
-
-        // 结束枪械模组
-        BulletSpawner.Instance.EndFire();
-        // 结束并清除触发器
-        DestroyAllTriggers();
-        Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();
-        foreach (var item in triggerComponents)
-        {
-            Destroy(item);
-        }
-
-        // 移除临时加成
-        DecreaseTemporaryBonus();
-        HealthController.Instance.DecreaseTemporaryBonus();
     }
 
     private void Awake()
@@ -311,13 +312,15 @@ public class PlayerController : MonoBehaviour
             case Food.FoodBonusType.AttackDamageByPercent:
             case Food.FoodBonusType.AttackSpeed:
             case Food.FoodBonusType.LoadSpeed:
+            case Food.FoodBonusType.AttackRange:
                 BulletSpawner.Instance.AddBonus(type, value, foodDurationType, timeLeft);
                 break;
 
             // 角色血量、护甲加成
             case Food.FoodBonusType.HealthUp:
-            case Food.FoodBonusType.ArmorUp:
+            case Food.FoodBonusType.HealthRecover:
             case Food.FoodBonusType.HealthDown:
+            case Food.FoodBonusType.ArmorUp:
                 HealthController.Instance.AddBonus(type, value, foodDurationType, timeLeft);
                 break;
             default:

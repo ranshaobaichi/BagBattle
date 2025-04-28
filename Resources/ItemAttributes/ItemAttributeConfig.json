@@ -1,10 +1,32 @@
 {
     "triggerAttribute": {
-        "fireTriggerAttributes": [],
+        "fireTriggerAttributes": [
+            {
+                "fireCountTriggerAttribute": {
+                    "triggerRange": 2,
+                    "description": "",
+                    "fireCount": 1,
+                    "fireTriggerType": 0
+                },
+                "fireTriggerShape": 2,
+                "fireTriggerDirection": 1
+            },
+            {
+                "fireCountTriggerAttribute": {
+                    "triggerRange": 1,
+                    "description": "",
+                    "fireCount": 1,
+                    "fireTriggerType": 1
+                },
+                "fireTriggerShape": 4,
+                "fireTriggerDirection": 1
+            }
+        ],
         "timeTriggerAttributes": [
             {
                 "timeTriggerAttribute": {
-                    "triggerRange": 1,
+                    "triggerRange": 2,
+                    "description": "这是你的基础触发器",
                     "triggerTime": 3.0,
                     "timeTriggerType": 0
                 },
@@ -21,6 +43,7 @@
                 "bulletItemAttribute": {
                     "specificBulletType": 0,
                     "bulletType": 1,
+                    "description": "这是一发普通子弹",
                     "bulletCount": 1
                 }
             }
@@ -33,6 +56,7 @@
                 "itemDirection": 1,
                 "foodItemAttribute": {
                     "specificFoodType": 0,
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 1,
@@ -52,11 +76,64 @@
                 "itemDirection": 1,
                 "surroundItemAttribute": {
                     "specificSurroundType": 0,
+                    "description": "",
                     "summonedSurroundingType": 1,
                     "surroundingCount": 1,
                     "surroundingDuration": 1.0,
                     "surroundingSpeedPercent": 1.0,
                     "surroundingPrefab": {
+                        "instanceID": 0
+                    }
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "surroundItemAttribute": {
+                    "specificSurroundType": 1,
+                    "description": "",
+                    "summonedSurroundingType": 2,
+                    "surroundingCount": 1,
+                    "surroundingDuration": 1.0,
+                    "surroundingSpeedPercent": 1.0,
+                    "surroundingPrefab": {
+                        "instanceID": 0
+                    }
+                }
+            }
+        ]
+    },
+    "otherAttribute": {
+        "otherAttributes": [
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "otherItemAttribute": {
+                    "description": "",
+                    "specificOtherType": 0,
+                    "otherItemPrefab": {
+                        "instanceID": 0
+                    }
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "otherItemAttribute": {
+                    "description": "",
+                    "specificOtherType": 2,
+                    "otherItemPrefab": {
+                        "instanceID": 0
+                    }
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "otherItemAttribute": {
+                    "description": "",
+                    "specificOtherType": 1,
+                    "otherItemPrefab": {
                         "instanceID": 0
                     }
                 }

@@ -13,6 +13,7 @@ public abstract class Item
         BulletItem,
         FoodItem,
         SurroundItem,
+        OtherItem,
         // Add other item types here
     }
     

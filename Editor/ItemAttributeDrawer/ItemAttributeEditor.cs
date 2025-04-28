@@ -16,11 +16,12 @@ public class ItemAttributeEditor : Editor
     private SerializedProperty bulletAttributeProperty;
     private SerializedProperty foodAttributeProperty;
     private SerializedProperty surroundAttributeProperty;
+    private SerializedProperty otherAttributeProperty;
     #endregion
 
     #region 折叠状态
     // 使用EditorPrefs来保存折叠状态，解决折叠菜单无法展开的问题
-    private bool ShowTriggerFoldout 
+    private bool ShowTriggerFoldout
     {
         get { return EditorPrefs.GetBool("ItemAttributeEditor_TriggerFoldout", false); }
         set { EditorPrefs.SetBool("ItemAttributeEditor_TriggerFoldout", value); }
@@ -43,6 +44,12 @@ public class ItemAttributeEditor : Editor
         get { return EditorPrefs.GetBool("ItemAttributeEditor_SurroundFoldout", false); }
         set { EditorPrefs.SetBool("ItemAttributeEditor_SurroundFoldout", value); }
     }
+
+    private bool ShowOtherFoldout
+    {
+        get { return EditorPrefs.GetBool("ItemAttributeEditor_OtherFoldout", false); }
+        set { EditorPrefs.SetBool("ItemAttributeEditor_OtherFoldout", value); }
+    }
     // 子类别折叠状态
     private bool ShowFireTriggerFoldout
     {
@@ -55,8 +62,14 @@ public class ItemAttributeEditor : Editor
         get { return EditorPrefs.GetBool("ItemAttributeEditor_TimeTriggerFoldout", false); }
         set { EditorPrefs.SetBool("ItemAttributeEditor_TimeTriggerFoldout", value); }
     }
-    #endregion
     
+    private bool ShowByOtherTriggerFoldout
+    {
+        get { return EditorPrefs.GetBool("ItemAttributeEditor_ByOtherTriggerFoldout", false); }
+        set { EditorPrefs.SetBool("ItemAttributeEditor_ByOtherTriggerFoldout", value); }
+    }
+    #endregion
+
     // 初始化
     private void OnEnable()
     {
@@ -64,6 +77,7 @@ public class ItemAttributeEditor : Editor
         bulletAttributeProperty = serializedObject.FindProperty("bulletAttribute");
         foodAttributeProperty = serializedObject.FindProperty("foodAttribute");
         surroundAttributeProperty = serializedObject.FindProperty("surroundAttribute");
+        otherAttributeProperty = serializedObject.FindProperty("otherAttribute");
     }
 
     public override void OnInspectorGUI()
@@ -124,6 +138,26 @@ public class ItemAttributeEditor : Editor
                 DrawTimeTriggers();
             }
 
+            GUILayout.Space(5);
+
+            // 其他触发器 - 使用自定义折叠控件
+            bool byOtherTriggerFoldout = ShowByOtherTriggerFoldout;
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                byOtherTriggerFoldout = EditorGUILayout.Toggle(byOtherTriggerFoldout, EditorStyles.foldout, GUILayout.Width(15));
+                if (GUILayout.Button("被其他触发器触发触发器", EditorStyles.label))
+                {
+                    byOtherTriggerFoldout = !byOtherTriggerFoldout;
+                }
+            }
+
+            ShowByOtherTriggerFoldout = byOtherTriggerFoldout;
+
+            if (byOtherTriggerFoldout)
+            {
+                DrawByOtherTriggers();
+            }
+
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.EndFoldoutHeaderGroup(); // 结束第一个折叠组
@@ -178,6 +212,33 @@ public class ItemAttributeEditor : Editor
             //     if (GUILayout.Button("环绕物预制体映射", EditorStyles.label))
             //     {
             //         surroundPrefabsFoldout = !surroundPrefabsFoldout;
+            //     }
+            // }
+            
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup(); // 结束第四个折叠组
+
+        GUILayout.Space(5);
+
+        // 其他物品配置 - 第五个顶级折叠组
+        bool otherFoldout = ShowOtherFoldout;
+        otherFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(otherFoldout, "其他物品配置");
+        ShowOtherFoldout = otherFoldout;
+        
+        if (otherFoldout)
+        {
+            EditorGUI.indentLevel++;
+            DrawOther();
+
+            // 其他物品预制体映射 - 使用自定义折叠控件
+            // bool otherPrefabsFoldout = ShowOtherPrefabsFoldout;
+            // using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            // {
+            //     otherPrefabsFoldout = EditorGUILayout.Toggle(otherPrefabsFoldout, EditorStyles.foldout, GUILayout.Width(15));
+            //     if (GUILayout.Button("其他物品预制体映射", EditorStyles.label))
+            //     {
+            //         otherPrefabsFoldout = !otherPrefabsFoldout;
             //     }
             // }
             
@@ -287,6 +348,9 @@ public class ItemAttributeEditor : Editor
                 SerializedProperty countProperty = attributeProperty.FindPropertyRelative("fireCount");
                 EditorGUILayout.PropertyField(countProperty, new GUIContent("开火次数"));
                 
+                SerializedProperty descriptionProperty = attributeProperty.FindPropertyRelative("description");
+                EditorGUILayout.PropertyField(descriptionProperty, new GUIContent("描述"));
+
                 if (itemProperty.FindPropertyRelative("fireTriggerShape") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("fireTriggerShape"), new GUIContent("形状"));
                 
@@ -356,6 +420,9 @@ public class ItemAttributeEditor : Editor
                 SerializedProperty countProperty = attributeProperty.FindPropertyRelative("triggerTime");
                 EditorGUILayout.PropertyField(countProperty, new GUIContent("触发时间"));
                 
+                SerializedProperty descriptionProperty = attributeProperty.FindPropertyRelative("description");
+                EditorGUILayout.PropertyField(descriptionProperty, new GUIContent("描述"));
+
                 if (itemProperty.FindPropertyRelative("timeTriggerShape") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("timeTriggerShape"), new GUIContent("形状"));
                 
@@ -370,6 +437,78 @@ public class ItemAttributeEditor : Editor
                 if (GUILayout.Button("添加配置"))
                 {
                     AddTimeTriggerConfig(timeTriggerAttributes, type);
+                }
+            }
+            
+            EditorGUILayout.EndVertical();
+            GUILayout.Space(5);
+        }
+        
+        EditorGUI.indentLevel--;
+    }
+
+    /// <summary>
+    /// 绘制被其他触发器触发触发器
+    /// </summary>
+    private void DrawByOtherTriggers()
+    {
+        EditorGUI.indentLevel++;
+        
+        // 获取开火触发器属性列表
+        SerializedProperty byOtherTriggerAttributes = triggerAttributeProperty.FindPropertyRelative("byOtherTriggerAttributes");
+        
+        // 遍历所有 ByOtherTriggerType 枚举值
+        Array byOtherTypes = Enum.GetValues(typeof(Assets.BagBattles.Types.ByOtherTriggerType));
+        foreach (Assets.BagBattles.Types.ByOtherTriggerType type in byOtherTypes)
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField($"类型: {type}", EditorStyles.boldLabel);
+            
+            // 查找该类型在属性数组中的索引
+            int index = -1;
+            for (int i = 0; i < byOtherTriggerAttributes.arraySize; i++)
+            {
+                SerializedProperty itemProperty = byOtherTriggerAttributes.GetArrayElementAtIndex(i);
+                SerializedProperty attributeProperty = itemProperty.FindPropertyRelative("byOtherTriggerAttribute");
+                SerializedProperty typeProperty = attributeProperty.FindPropertyRelative("byOtherTriggerType");
+                
+                if ((int)type == typeProperty.enumValueIndex)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if (index >= 0)
+            {
+                // 显示已有配置
+                SerializedProperty itemProperty = byOtherTriggerAttributes.GetArrayElementAtIndex(index);
+                SerializedProperty attributeProperty = itemProperty.FindPropertyRelative("byOtherTriggerAttribute");
+                
+                // 显示相关属性
+                SerializedProperty rangeProperty = attributeProperty.FindPropertyRelative("triggerRange");
+                EditorGUILayout.PropertyField(rangeProperty, new GUIContent("触发范围"));
+                
+                SerializedProperty countProperty = attributeProperty.FindPropertyRelative("requiredTriggerCount");
+                EditorGUILayout.PropertyField(countProperty, new GUIContent("触发时所需其他触发器触发次数"));
+                
+                SerializedProperty descriptionProperty = attributeProperty.FindPropertyRelative("description");
+                EditorGUILayout.PropertyField(descriptionProperty, new GUIContent("描述"));
+
+                if (itemProperty.FindPropertyRelative("byOtherTriggerShape") != null)
+                    EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("byOtherTriggerShape"), new GUIContent("形状"));
+                
+                if (itemProperty.FindPropertyRelative("byOtherTriggerDirection") != null)
+                    EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("byOtherTriggerDirection"), new GUIContent("方向"));
+            }
+            else
+            {
+                // 显示添加按钮
+                EditorGUILayout.HelpBox("该类型尚未配置", MessageType.Info);
+                
+                if (GUILayout.Button("添加配置"))
+                {
+                    AddByOtherTriggerConfig(byOtherTriggerAttributes, type);
                 }
             }
             
@@ -426,6 +565,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("bulletCount"), new GUIContent("子弹数量"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
+                EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
             }
             else
             {
@@ -485,13 +625,15 @@ public class ItemAttributeEditor : Editor
 
                 // 显示食物基本属性
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("specificFoodType"), new GUIContent("食物类型"));
-                
+
                 // 显示食物效果列表
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("foodItemAttributes"), new GUIContent("食物效果"), true);
-                
+
                 // 显示形状和方向
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
+                
+                EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
             }
             else
             {
@@ -558,6 +700,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("surroundingDuration"), new GUIContent("环绕物加速持续时间"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
+                EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
             }
             else
             {
@@ -576,6 +719,65 @@ public class ItemAttributeEditor : Editor
         }
     }
     
+    /// <summary>
+    /// 绘制其他物品配置
+    /// </summary>
+    private void DrawOther()
+    {
+        // 检查属性是否存在
+        if (otherAttributeProperty == null)
+        {
+            EditorGUILayout.HelpBox("其他类别道具属性不存在", MessageType.Warning);
+            return;
+        }
+
+        SerializedProperty otherAttributes = otherAttributeProperty.FindPropertyRelative("otherAttributes");
+
+        EditorGUILayout.LabelField("其他类别道具类型", EditorStyles.boldLabel);
+
+        // 遍历所有 OtherType 枚举值
+        Array otherTypes = Enum.GetValues(typeof(Assets.BagBattles.Types.OtherType));
+        foreach (Assets.BagBattles.Types.OtherType type in otherTypes)
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                // EditorGUILayout.LabelField($"其他类别道具类型:", GUILayout.Width(70));
+                // EditorGUILayout.LabelField($"{type}", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField($"其他类别道具类型：{type}", EditorStyles.boldLabel);
+            }
+
+            // 查找该类型在属性数组中的索引
+            int index = FindTypeIndex(otherAttributes, "otherItemAttribute", "specificOtherType", (int)type);
+
+            if (index >= 0)
+            {
+                // 找到了对应类型的属性
+                SerializedProperty itemProperty = otherAttributes.GetArrayElementAtIndex(index);
+                SerializedProperty otherItemAttributeProperty = itemProperty.FindPropertyRelative("otherItemAttribute");
+
+                // 显示其他类别道具属性
+                EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
+                EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
+                EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("该类型尚未配置。", MessageType.Info);
+
+                // 添加"添加配置"按钮
+                if (GUILayout.Button("添加配置", GUILayout.Height(25)))
+                {
+                    // 添加新的其他类别道具配置
+                    AddOtherConfig(otherAttributes, type);
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+            GUILayout.Space(5);
+        }
+    }
     #endregion
     
     #region 辅助方法
@@ -695,6 +897,34 @@ public class ItemAttributeEditor : Editor
         serializedObject.ApplyModifiedProperties();
         Debug.Log($"已添加环绕物配置: {type}");
     }
+    
+    /// <summary>
+    /// 添加新的环绕物配置
+    /// </summary>
+    private void AddOtherConfig(SerializedProperty otherAttributes, Assets.BagBattles.Types.OtherType type)
+    {
+        serializedObject.Update();
+
+        // 增加数组元素
+        otherAttributes.arraySize++;
+        SerializedProperty newItem = otherAttributes.GetArrayElementAtIndex(otherAttributes.arraySize - 1);
+
+        // 设置环绕物类型
+        SerializedProperty otherItemAttributeProperty = newItem.FindPropertyRelative("otherItemAttribute");
+        SerializedProperty typeProperty = otherItemAttributeProperty.FindPropertyRelative("specificOtherType");
+        typeProperty.enumValueIndex = (int)type;
+
+        SerializedProperty itemShapeProperty = newItem.FindPropertyRelative("itemShape");
+        if (itemShapeProperty != null)
+            itemShapeProperty.enumValueIndex = 0; // 默认形状
+
+        SerializedProperty itemDirectionProperty = newItem.FindPropertyRelative("itemDirection");
+        if (itemDirectionProperty != null)
+            itemDirectionProperty.enumValueIndex = 0; // 默认方向
+
+        serializedObject.ApplyModifiedProperties();
+        Debug.Log($"已添加环绕物配置: {type}");
+    }
 
     /// <summary>
     /// 添加新的开火触发器配置
@@ -769,6 +999,41 @@ public class ItemAttributeEditor : Editor
         serializedObject.ApplyModifiedProperties();
         Debug.Log($"已添加时间触发器配置: {type}");
     }
+
+    private void AddByOtherTriggerConfig(SerializedProperty byOtherTriggerAttributes, Assets.BagBattles.Types.ByOtherTriggerType type)
+    {
+        serializedObject.Update();
+        
+        // 增加数组元素
+        byOtherTriggerAttributes.arraySize++;
+        SerializedProperty newItem = byOtherTriggerAttributes.GetArrayElementAtIndex(byOtherTriggerAttributes.arraySize - 1);
+
+        // 设置触发器类型
+        SerializedProperty attributeProperty = newItem.FindPropertyRelative("byOtherTriggerAttribute");
+        SerializedProperty typeProperty = attributeProperty.FindPropertyRelative("byOtherTriggerType");
+        typeProperty.enumValueIndex = (int)type;
+
+        // 设置其他默认属性
+        SerializedProperty rangeProperty = attributeProperty.FindPropertyRelative("triggerRange");
+        if (rangeProperty != null)
+            rangeProperty.enumValueIndex = 0; // 默认触发范围
+            
+        SerializedProperty countProperty = attributeProperty.FindPropertyRelative("requiredTriggerCount");
+        if (countProperty != null)
+            countProperty.intValue = 1; // 默认次数
+            
+        SerializedProperty shapeProperty = newItem.FindPropertyRelative("byOtherTriggerShape");
+        if (shapeProperty != null)
+            shapeProperty.enumValueIndex = 0; // 默认形状
+            
+        SerializedProperty directionProperty = newItem.FindPropertyRelative("byOtherTriggerDirection");
+        if (directionProperty != null)
+            directionProperty.enumValueIndex = 0; // 默认方向
+
+        serializedObject.ApplyModifiedProperties();
+        Debug.Log($"已添加触发器配置: {type}");
+    }
+
     /// <summary>
     /// 通用方法：查找指定类型在属性数组中的索引
     /// </summary>
@@ -809,7 +1074,8 @@ public class ItemAttributeEditor : Editor
                 triggerAttribute = asset.triggerAttribute,
                 bulletAttribute = asset.bulletAttribute,
                 foodAttribute = asset.foodAttribute,
-                surroundAttribute = asset.surroundAttribute
+                surroundAttribute = asset.surroundAttribute,
+                otherAttribute = asset.otherAttribute,
             };
 
             // 转换为JSON
@@ -864,6 +1130,7 @@ public class ItemAttributeEditor : Editor
             asset.bulletAttribute = data.bulletAttribute;
             asset.foodAttribute = data.foodAttribute;
             asset.surroundAttribute = data.surroundAttribute;
+            asset.otherAttribute = data.otherAttribute;
 
             // 标记为已修改
             EditorUtility.SetDirty(asset);

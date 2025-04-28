@@ -9,6 +9,7 @@ public class EnemyController : MonoBehaviour
     [Tooltip("同种敌人生成时移速差距")] public float speed_gap;
     protected PlayerController player;
     protected float[] ice_effect;
+    protected float[] fire_effect;
     protected Enemy.EnemyType enemy_type;
 
     [Header("基础属性")]
@@ -21,7 +22,7 @@ public class EnemyController : MonoBehaviour
     [Tooltip("接触伤害攻速")] public float attack_speed;
     [Tooltip("冰属性减速层数")] protected int ice_level;
     [Tooltip("冰属性减速持续时间")] public float ice_time;
-    [Tooltip("火属性伤害数值")] protected float fire_effect;
+    [Tooltip("火属性伤害层数")] protected int fire_level;
     [Tooltip("火属性伤害持续时间")] protected float fire_time;
 
     [Header("受击效果")]
@@ -105,6 +106,7 @@ public class EnemyController : MonoBehaviour
             return;
         }
         ice_effect = new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f };
+        fire_effect = new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f };
         Initialize();
     }
 
@@ -246,10 +248,7 @@ public class EnemyController : MonoBehaviour
             {
                 fire_flag = false;
                 fire_timer = 0.0f;
-            }
-            else
-            {
-                TakeDamage(fire_effect);
+                StopCoroutine(TakeFireDamage());
             }
         }
     }
@@ -269,19 +268,36 @@ public class EnemyController : MonoBehaviour
 
     #region 道具效果
     //火
-    public void SetFire()
+    public void SetFire(int level = 1)
     {
+        if (level == 0)
+        {
+            fire_timer = 0.0f;
+            return;
+        }
+        StopCoroutine(TakeFireDamage());
         fire_flag = true;
         fire_timer = 0.0f;
+        fire_level = Math.Min(fire_level + level, 9);
+        StartCoroutine(TakeFireDamage());
     }
     public bool OnFire() { return fire_flag; }
-    //冰
-    public void SetIce()
+    protected IEnumerator TakeFireDamage()
     {
+        TakeDamage(fire_effect[fire_level]);
+        yield return new WaitForSeconds(1f);
+    }
+    //冰
+    public void SetIce(int level = 1)
+    {
+        if (level == 0)
+        {
+            ice_timer = 0.0f;
+            return;
+        }
         ice_flag = true;
         ice_timer = 0.0f;
-        if (ice_level < 9)
-            ice_level++;
+        ice_level = Math.Min(ice_level + level, 9);
     }
     public bool OnIce() { return ice_flag; }
     

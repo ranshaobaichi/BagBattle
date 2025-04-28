@@ -19,7 +19,8 @@ public class BulletInventoryItem : InventoryItem
         // 形状设置
         itemShape = ItemAttribute.Instance.GetItemShape(itemType, type);
         InitializeDirection(ItemAttribute.Instance.GetItemDirection(itemType, type));
-        if (itemShape == InventoryItem.ItemShape.NONE || 
+        description = ItemAttribute.Instance.GetDescription(itemType, type);
+        if (itemShape == InventoryItem.ItemShape.NONE ||
             itemDirection == InventoryItem.Direction.NONE)
         {
             Debug.LogError($"子弹道具初始化错误,无法获取子弹形状");

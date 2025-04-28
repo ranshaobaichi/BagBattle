@@ -5,9 +5,6 @@ namespace Assets.BagBattles.Types
 {
     #region TriggerType
     [Serializable]
-    /// <summary>
-    /// 开火次数触发器具体类型
-    /// </summary>
     public enum FireTriggerType
     {
         Type1,
@@ -17,11 +14,19 @@ namespace Assets.BagBattles.Types
         Type5,
     }
 
+    // 时间触发器具体类型
     public enum TimeTriggerType
     {
-        /// <summary>
-        /// 1s触发，范围为邻近1格
-        /// </summary>
+        Type1,
+        Type2,
+        Type3,
+        Type4,
+        Type5,
+    }
+
+    // 其他触发器具体类型
+    public enum ByOtherTriggerType
+    {
         Type1,
         Type2,
         Type3,
@@ -30,7 +35,7 @@ namespace Assets.BagBattles.Types
     }
     #endregion
 
-    #region FoodType
+    #region 食物
     [Serializable]
     public enum FoodType
     {
@@ -42,9 +47,10 @@ namespace Assets.BagBattles.Types
     }
     #endregion
 
-    #region BulletType
+    #region 子弹种类
     public enum BulletType
     {
+        // 后面带Single的都是单发子弹类型
         Normal_Bullet_Single,
         Spear_Bullet_Single,
         Rocket_Bullet_Single,
@@ -63,12 +69,23 @@ namespace Assets.BagBattles.Types
     }
     #endregion
 
-    #region SurroundType
+    #region 环绕物
     public enum SurroundType
     {
-        SingleFireBall,
-        SingleElectricityBall,
+        SingleFireBall, // 单个火球
+        SingleElectricityBall,  // 单个电球
     }
+    #endregion
 
+    #region 其他种类
+    public enum OtherType
+    {
+        FireZone,
+        D100,
+        FallingPillar,
+        NextShootDamageUp1, // 下一发子弹伤害加成
+        NextShootDamageUp2,
+        NextShootDamageUp3,
+    }
     #endregion
 }

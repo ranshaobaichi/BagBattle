@@ -10,6 +10,7 @@ public struct BulletItemAttribute
 {
     [Header("子弹道具类型")] [Assets.Editor.ItemAttributeDrawer.ReadOnly] public BulletType specificBulletType;
     [Header("装载子弹类型")] public Bullet.SingleBulletType bulletType;
+    [Header("道具描述")] public string description;
     [Header("子弹装载数量")] public int bulletCount;
 }
 [Serializable]
@@ -24,19 +25,29 @@ public struct FoodItemAttribute
         [Tooltip("食物加成持续时间（回合数）")] public float timeLeft;
     }
     [Header("食物类型")][Assets.Editor.ItemAttributeDrawer.ReadOnly] public FoodType specificFoodType;
+    [Header("道具描述")] public string description;
     [Header("食物效果配置")] public List<BasicFoodAttribute> foodItemAttributes;
 }
 
 [Serializable]
 public struct SurroundItemAttribute
 {
-    [Header("环绕物类型")] [Assets.Editor.ItemAttributeDrawer.ReadOnly] public SurroundType specificSurroundType;
+    [Header("环绕物类型")][Assets.Editor.ItemAttributeDrawer.ReadOnly] public SurroundType specificSurroundType;
+    [Header("道具描述")] public string description;
     [Header("环绕物属性")]
     [Tooltip("召唤的环绕物类型")] public Surrounding.SingleSurroundingType summonedSurroundingType;
     [Tooltip("一次产生的环绕物数量")] public int surroundingCount;
     [Tooltip("环绕物加速持续时间")] public float surroundingDuration;
     [Tooltip("再次触发时的加速百分比")] public float surroundingSpeedPercent;
     [HideInInspector] public GameObject surroundingPrefab;
+}
+
+[Serializable]
+public struct OtherItemAttribute
+{
+    [Header("道具描述")] public string description;
+    [Header("其他物品类型")][Assets.Editor.ItemAttributeDrawer.ReadOnly] public OtherType specificOtherType;
+    [HideInInspector] public GameObject otherItemPrefab;
 }
 #endregion
 
@@ -50,6 +61,7 @@ public interface IItemAttributeConfig
     InventoryItem.ItemShape GetShape();
     InventoryItem.Direction GetDirection();
     string GetName();
+    string GetDescription();
 }
 /// <summary>
 /// 触发器配置基础接口
@@ -78,7 +90,7 @@ public class TriggerAttribute
         public InventoryItem.ItemShape GetShape() => fireTriggerShape;
         public InventoryItem.Direction GetDirection() => fireTriggerDirection;
         public string GetName() => fireCountTriggerAttribute.fireTriggerType.ToString();
-
+        public string GetDescription() => fireCountTriggerAttribute.description;
         // 初始化方法，设置特定触发器类型
         public static FireCountTriggerAttribute Create(FireTriggerType type)
         {
@@ -107,6 +119,7 @@ public class TriggerAttribute
         public InventoryItem.ItemShape GetShape() => timeTriggerShape;
         public InventoryItem.Direction GetDirection() => timeTriggerDirection;
         public string GetName() => timeTriggerAttribute.timeTriggerType.ToString();
+        public string GetDescription() => timeTriggerAttribute.description;
 
         // 初始化方法，设置特定触发器类型
         public static TimeTriggerAttribute Create(TimeTriggerType type)
@@ -123,11 +136,42 @@ public class TriggerAttribute
             };
         }
     }
+
+    [Serializable]
+    public struct ByOtherTriggerAttribute : ITriggerAttributeConfig
+    {
+        [Tooltip("开火次数触发器属性")] public Trigger.ByOtherTriggerAttribute byOtherTriggerAttribute;
+        [Header("道具形状")] public InventoryItem.ItemShape byOtherTriggerShape;
+        [Header("道具方向")] public InventoryItem.Direction byOtherTriggerDirection;
+
+        public Trigger.TriggerRange GetTriggerRange() => byOtherTriggerAttribute.triggerRange;
+        public InventoryItem.ItemShape GetShape() => byOtherTriggerShape;
+        public InventoryItem.Direction GetDirection() => byOtherTriggerDirection;
+        public string GetName() => byOtherTriggerAttribute.byOtherTriggerType.ToString();
+        public string GetDescription() => byOtherTriggerAttribute.description;
+        // 初始化方法，设置特定触发器类型
+        public static ByOtherTriggerAttribute Create(ByOtherTriggerType type)
+        {
+            return new ByOtherTriggerAttribute
+            {
+                byOtherTriggerShape = InventoryItem.ItemShape.NONE,
+                byOtherTriggerDirection = InventoryItem.Direction.UP,
+                byOtherTriggerAttribute = new Trigger.ByOtherTriggerAttribute()
+                {
+                    requiredTriggerCount = 1,
+                    triggerRange = Trigger.TriggerRange.None,
+                    byOtherTriggerType = type
+                }
+            };
+        }
+    }
+
     #endregion
 
     #region 实例化配置区域
     [SerializeField][Header("开火触发器")] public List<FireCountTriggerAttribute> fireTriggerAttributes = new List<FireCountTriggerAttribute>();
     [SerializeField][Header("时间触发器")] public List<TimeTriggerAttribute> timeTriggerAttributes = new List<TimeTriggerAttribute>();
+    [SerializeField][Header("被其他触发器触发触发器")] public List<ByOtherTriggerAttribute> byOtherTriggerAttributes = new List<ByOtherTriggerAttribute>();
     #endregion
 
     #region 函数及接口
@@ -144,6 +188,12 @@ public class TriggerAttribute
         foreach (var type in Enum.GetValues(typeof(TimeTriggerType)))
         {
             timeTriggerAttributes.Add(TimeTriggerAttribute.Create((TimeTriggerType)type));
+        }
+
+        // 初始化被其他触发器触发触发器属性
+        foreach (var type in Enum.GetValues(typeof(ByOtherTriggerType)))
+        {
+            byOtherTriggerAttributes.Add(ByOtherTriggerAttribute.Create((ByOtherTriggerType)type));
         }
     }
 
@@ -179,6 +229,22 @@ public class TriggerAttribute
         return false;
     }
 
+    /// <summary>
+    /// 尝试获取被其他触发器触发触发器属性
+    /// </summary>
+    private bool TryGetByOtherTriggerAttribute(object triggerTypeObj, out ByOtherTriggerAttribute attribute)
+    {
+        attribute = default;
+        if (triggerTypeObj is ByOtherTriggerType byOtherTriggerType &&
+            (int)byOtherTriggerType >= 0 &&
+            (int)byOtherTriggerType < byOtherTriggerAttributes.Count)
+        {
+            attribute = byOtherTriggerAttributes[(int)byOtherTriggerType];
+            return true;
+        }
+        return false;
+    }
+
     public Trigger.TriggerRange GetTriggerRange(Trigger.TriggerType triggerType, object trigger)
     {
         switch (triggerType)
@@ -193,6 +259,12 @@ public class TriggerAttribute
                 if (TryGetTimeTriggerAttribute(trigger, out var timeAttr))
                 {
                     return timeAttr.GetTriggerRange();
+                }
+                break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (TryGetByOtherTriggerAttribute(trigger, out var byOtherAttr))
+                {
+                    return byOtherAttr.GetTriggerRange();
                 }
                 break;
         }
@@ -217,6 +289,12 @@ public class TriggerAttribute
                     return timeAttr.timeTriggerAttribute;
                 }
                 break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (TryGetByOtherTriggerAttribute(specificType, out var byOtherAttr))
+                {
+                    return byOtherAttr.byOtherTriggerAttribute;
+                }
+                break;
         }
 
         Debug.LogError($"触发器类型{triggerType}错误或未实现,无法获取触发器属性");
@@ -237,6 +315,12 @@ public class TriggerAttribute
                 if (TryGetTimeTriggerAttribute(specificType, out var timeAttr))
                 {
                     return timeAttr.GetShape();
+                }
+                break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (TryGetByOtherTriggerAttribute(specificType, out var byOtherAttr))
+                {
+                    return byOtherAttr.GetShape();
                 }
                 break;
         }
@@ -261,12 +345,45 @@ public class TriggerAttribute
                     return timeAttr.GetDirection();
                 }
                 break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (TryGetByOtherTriggerAttribute(specificType, out var byOtherAttr))
+                {
+                    return byOtherAttr.GetDirection();
+                }
+                break;
         }
 
         Debug.LogError($"触发器类型{triggerType}错误或未实现,无法获取触发器方向");
         return InventoryItem.Direction.NONE;
     }
-    
+
+    public string GetDescription(Trigger.TriggerType triggerType, object specificType)
+    {
+        switch (triggerType)
+        {
+            case Trigger.TriggerType.ByFireTimes:
+                if (TryGetFireTriggerAttribute(specificType, out var fireAttr))
+                {
+                    return fireAttr.GetDescription();
+                }
+                break;
+            case Trigger.TriggerType.ByTime:
+                if (TryGetTimeTriggerAttribute(specificType, out var timeAttr))
+                {
+                    return timeAttr.GetDescription();
+                }
+                break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (TryGetByOtherTriggerAttribute(specificType, out var byOtherAttr))
+                {
+                    return byOtherAttr.GetDescription();
+                }
+                break;
+        }
+
+        Debug.LogError($"触发器类型{triggerType}错误或未实现,无法获取触发器描述");
+        return null;
+    }
     #endregion
 }
 
@@ -302,10 +419,11 @@ public class BulletAttribute
         public InventoryItem.ItemShape GetShape() => itemShape;
         public InventoryItem.Direction GetDirection() => itemDirection;
         public string GetName() => bulletItemAttribute.specificBulletType.ToString();
+        public string GetDescription() => bulletItemAttribute.description;
     }
-    
+
     [SerializeField] List<_bulletAttribute> bulletAttributes = new List<_bulletAttribute>();
-    
+
     public BulletAttribute()
     {
         foreach (var type in Enum.GetValues(typeof(BulletType)))
@@ -341,6 +459,16 @@ public class BulletAttribute
         }
         return bulletAttributes[(int)bulletType].GetDirection();
     }
+    
+    public string GetDescription(BulletType bulletType)
+    {
+        if (bulletAttributes.Contains(bulletAttributes[(int)bulletType]) == false)
+        {
+            Debug.LogError($"子弹类型{bulletType}错误,无法获取子弹描述");
+            return null;
+        }
+        return bulletAttributes[(int)bulletType].GetDescription();
+    }
 }
 
 [Serializable]
@@ -373,10 +501,11 @@ public class FoodAttribute
         public InventoryItem.ItemShape GetShape() => itemShape;
         public InventoryItem.Direction GetDirection() => itemDirection;
         public string GetName() => foodItemAttribute.specificFoodType.ToString();
+        public string GetDescription() => foodItemAttribute.description;
     }
-    
+
     [SerializeField] List<_foodAttribute> foodAttributes = new List<_foodAttribute>();
-    
+
     public FoodAttribute()
     {
         foreach (var type in Enum.GetValues(typeof(FoodType)))
@@ -411,6 +540,16 @@ public class FoodAttribute
             return InventoryItem.Direction.NONE;
         }
         return foodAttributes[(int)foodType].itemDirection;
+    }
+    
+    public string GetDescription(FoodType foodType)
+    {
+        if (foodAttributes.Contains(foodAttributes[(int)foodType]) == false)
+        {
+            Debug.LogError($"食物类型{foodType}错误,无法获取食物描述");
+            return null;
+        }
+        return foodAttributes[(int)foodType].foodItemAttribute.description;
     }
 }
 
@@ -447,6 +586,7 @@ public class SurroundAttribute
         public InventoryItem.ItemShape GetShape() => itemShape;
         public InventoryItem.Direction GetDirection() => itemDirection;
         public string GetName() => surroundItemAttribute.specificSurroundType.ToString();
+        public string GetDescription() => surroundItemAttribute.description;
     }
 
     [SerializeField] List<_surroundAttribute> surroundAttributes = new List<_surroundAttribute>();
@@ -511,6 +651,115 @@ public class SurroundAttribute
         }
         return surroundAttributes[(int)surroundType].GetDirection();
     }
+
+    public string GetDescription(SurroundType surroundType)
+    {
+        if (surroundAttributes.Contains(surroundAttributes[(int)surroundType]) == false)
+        {
+            Debug.LogError($"环绕物类型{surroundType}错误,无法获取环绕物描述");
+            return null;
+        }
+        return surroundAttributes[(int)surroundType].GetDescription();
+    }
+}
+
+[Serializable]
+public class OtherAttribute
+{
+    private readonly string OTHER_PREFAB_PATH = "Others/";
+    [Serializable]
+    public struct _otherAttribute : IItemAttributeConfig
+    {
+        [Header("其他道具形状")] public InventoryItem.ItemShape itemShape;
+        [Tooltip("其他方向")] public InventoryItem.Direction itemDirection;
+        [Header("其他配置")] public OtherItemAttribute otherItemAttribute;
+
+        // 初始化方法，设置特定其他类型
+        public static _otherAttribute Create(OtherType type)
+        {
+            return new _otherAttribute
+            {
+                itemShape = InventoryItem.ItemShape.NONE,
+                itemDirection = InventoryItem.Direction.UP,
+                otherItemAttribute = new OtherItemAttribute()
+                {
+                    specificOtherType = type,
+                }
+            };
+        }
+
+        public InventoryItem.ItemShape GetShape() => itemShape;
+        public InventoryItem.Direction GetDirection() => itemDirection;
+        public string GetName() => otherItemAttribute.specificOtherType.ToString();
+        public string GetDescription() => otherItemAttribute.description;
+    }
+
+    [SerializeField] List<_otherAttribute> otherAttributes = new List<_otherAttribute>();
+    public Dictionary<OtherType, GameObject> otherPrefabs = new();
+
+    public OtherAttribute()
+    {
+        foreach (var type in Enum.GetValues(typeof(OtherType)))
+        {
+            otherAttributes.Add(_otherAttribute.Create((OtherType)type));
+        }
+    }
+
+    public void LoadOtherPrefabs()
+    {
+        foreach (var type in Enum.GetValues(typeof(OtherType)))
+        {
+            var prefab = Resources.Load<GameObject>(OTHER_PREFAB_PATH + type.ToString());
+            if (prefab != null)
+            {
+                otherPrefabs.Add((OtherType)type, prefab);
+            }
+            else
+            {
+                Debug.LogError($"其他类型道具预制体{type}未找到,请检查路径{OTHER_PREFAB_PATH + type.ToString()}");
+            }
+        }
+    }
+
+    public InventoryItem.ItemShape GetOtherShape(OtherType otherType)
+    {
+        if (otherAttributes.Contains(otherAttributes[(int)otherType]) == false)
+        {
+            Debug.LogError($"其他类型道具类型{otherType}错误,无法获取其他类型道具形状");
+            return InventoryItem.ItemShape.NONE;
+        }
+        return otherAttributes[(int)otherType].GetShape();
+    }
+    public object GetOtherAttribute(OtherType otherType)
+    {
+        var attr = otherAttributes[(int)otherType].otherItemAttribute;
+        otherPrefabs.TryGetValue(attr.specificOtherType, out attr.otherItemPrefab);
+        if (attr.otherItemPrefab == null)
+        {
+            Debug.LogError($"其他类型道具类型{otherType}未加载入字典, 无法获取其他类型道具预制体");
+            return null;
+        }
+        return attr;
+    }
+    public InventoryItem.Direction GetOtherDirection(OtherType otherType)
+    {
+        if (otherAttributes.Contains(otherAttributes[(int)otherType]) == false)
+        {
+            Debug.LogError($"其他类型道具类型{otherType}错误,无法获取其他类型道具方向");
+            return InventoryItem.Direction.NONE;
+        }
+        return otherAttributes[(int)otherType].GetDirection();
+    }
+
+    public string GetDescription(OtherType otherType)
+    {
+        if (otherAttributes.Contains(otherAttributes[(int)otherType]) == false)
+        {
+            Debug.LogError($"其他类型道具类型{otherType}错误,无法获取其他类型道具描述");
+            return null;
+        }
+        return otherAttributes[(int)otherType].GetDescription();
+    }
 }
 
 #endregion
@@ -521,6 +770,7 @@ public class ItemAttributeData
     public BulletAttribute bulletAttribute;
     public FoodAttribute foodAttribute;
     public SurroundAttribute surroundAttribute;
+    public OtherAttribute otherAttribute;
 }
 
 [CreateAssetMenu(fileName = "ItemAttribute", menuName = "ScriptableObjects/ItemAttribute", order = 1)]
@@ -528,7 +778,7 @@ public class ItemAttribute : ScriptableObject
 {
     // 定义JSON文件路径
     private static readonly string JSON_FILE_PATH = "ItemAttributes/ItemAttributeConfig";
-    
+
     private static ItemAttribute _instance;
     public static ItemAttribute Instance
     {
@@ -538,7 +788,7 @@ public class ItemAttribute : ScriptableObject
             {
                 // 首先尝试从JSON加载
                 _instance = LoadFromJson();
-                
+
                 if (_instance == null)
                 {
                     // 如果JSON加载失败，回退到ScriptableObject
@@ -558,6 +808,7 @@ public class ItemAttribute : ScriptableObject
     public BulletAttribute bulletAttribute = new();
     public FoodAttribute foodAttribute = new();
     public SurroundAttribute surroundAttribute = new();
+    public OtherAttribute otherAttribute = new();
 
     // 从JSON加载数据
     private static ItemAttribute LoadFromJson()
@@ -580,8 +831,10 @@ public class ItemAttribute : ScriptableObject
                 instance.bulletAttribute = data.bulletAttribute;
                 instance.foodAttribute = data.foodAttribute;
                 instance.surroundAttribute = data.surroundAttribute;
+                instance.otherAttribute = data.otherAttribute;
 
                 instance.surroundAttribute.LoadSurroundingPrefabs(); // 加载环绕物预制体
+                instance.otherAttribute.LoadOtherPrefabs();
                 Debug.Log("从JSON文件加载道具属性成功");
                 return instance;
             }
@@ -592,7 +845,7 @@ public class ItemAttribute : ScriptableObject
         }
         return null;
     }
-    
+
     // 导出当前配置到JSON (编辑器工具)
 #if UNITY_EDITOR
     [UnityEditor.MenuItem("Tools/导出道具属性到JSON")]
@@ -603,7 +856,7 @@ public class ItemAttribute : ScriptableObject
         {
             asset = Resources.Load<ItemAttribute>("ItemAttributes/ItemAttributeConfig");
         }
-        
+
         if (asset != null)
         {
             // 创建数据对象
@@ -612,23 +865,24 @@ public class ItemAttribute : ScriptableObject
                 triggerAttribute = asset.triggerAttribute,
                 bulletAttribute = asset.bulletAttribute,
                 foodAttribute = asset.foodAttribute,
-                surroundAttribute = asset.surroundAttribute
+                surroundAttribute = asset.surroundAttribute,
+                otherAttribute = asset.otherAttribute
             };
-            
+
             // 转换为JSON
             string jsonData = JsonUtility.ToJson(data, true);
-            
+
             // 创建Resources/ItemAttributes目录
             string directory = Path.Combine(Application.dataPath, "Resources/ItemAttributes");
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             // 保存JSON文件
             string filePath = Path.Combine(directory, "ItemAttributeConfig.json");
             File.WriteAllText(filePath, jsonData);
-            
+
             Debug.Log($"已导出道具属性到JSON文件: {filePath}");
             UnityEditor.AssetDatabase.Refresh();
         }
@@ -689,6 +943,12 @@ public class ItemAttribute : ScriptableObject
                     return triggerAttribute.GetAttributeValue(Trigger.TriggerType.ByTime, timeTriggerType);
                 }
                 break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                if (specificType is ByOtherTriggerType byOtherTriggerType)
+                {
+                    return triggerAttribute.GetAttributeValue(Trigger.TriggerType.ByOtherTrigger, byOtherTriggerType);
+                }
+                break;
             default:
                 Debug.LogError($"触发器类型下未实现的功能类型: {(Trigger.TriggerType)functionType}");
                 return null;
@@ -713,7 +973,23 @@ public class ItemAttribute : ScriptableObject
             return InventoryItem.Direction.NONE;
         }
     }
-
+    public string GetDescription(Item.ItemType itemType, object functionType, object specificType)
+    {
+        if (itemType != Item.ItemType.TriggerItem)
+        {
+            Debug.LogError($"{itemType}错误调用触发器类型获取描述");
+            return null;
+        }
+        if (functionType is Trigger.TriggerType triggerType)
+        {
+            return triggerAttribute.GetDescription(triggerType, specificType);
+        }
+        else
+        {
+            Debug.LogError($"非触发器类型{itemType}错误调用触发器获取描述接口");
+            return null;
+        }
+    }
     #endregion
 
     #region 普通接口
@@ -727,7 +1003,7 @@ public class ItemAttribute : ScriptableObject
         switch (itemType)
         {
             case Item.ItemType.FoodItem:
-                if(specificType is FoodType foodType)
+                if (specificType is FoodType foodType)
                 {
                     return foodAttribute.GetFoodShape(foodType);
                 }
@@ -754,6 +1030,16 @@ public class ItemAttribute : ScriptableObject
                 else
                 {
                     Debug.LogError($"环绕物类型{(SurroundType)specificType}错误,无法获取环绕物形状");
+                    break;
+                }
+            case Item.ItemType.OtherItem:
+                if (specificType is OtherType otherType)
+                {
+                    return otherAttribute.GetOtherShape(otherType);
+                }
+                else
+                {
+                    Debug.LogError($"其他道具类型{(OtherType)specificType}错误,无法获取其他道具形状");
                     break;
                 }
             default:
@@ -803,6 +1089,16 @@ public class ItemAttribute : ScriptableObject
                     Debug.LogError($"环绕物类型{(SurroundType)specificType}错误或未实现,无法获取环绕物属性");
                     return null;
                 }
+            case Item.ItemType.OtherItem:
+                if (specificType is OtherType otherType)
+                {
+                    return otherAttribute.GetOtherAttribute(otherType);
+                }
+                else
+                {
+                    Debug.LogError($"其他道具类型{(OtherType)specificType}错误或未实现,无法获取其他道具属性");
+                    return null;
+                }
             default:
                 Debug.LogError($"未实现的物品类型: {itemType}");
                 return null;
@@ -848,12 +1144,80 @@ public class ItemAttribute : ScriptableObject
                     Debug.LogError($"环绕物类型{(SurroundType)specificType}错误,无法获取环绕物方向");
                     break;
                 }
+            case Item.ItemType.OtherItem:
+                if (specificType is OtherType otherType)
+                {
+                    return otherAttribute.GetOtherDirection(otherType);
+                }
+                else
+                {
+                    Debug.LogError($"其他道具类型{(OtherType)specificType}错误,无法获取其他道具方向");
+                    break;
+                }
             default:
                 Debug.LogError($"物品类型{itemType}错误或未实现,无法获取方向属性");
                 break;
         }
 
         return InventoryItem.Direction.NONE;
+    }
+
+    public string GetDescription(Item.ItemType itemType, object specificType)
+    {
+        if (itemType == Item.ItemType.TriggerItem)
+        {
+            Debug.LogError("触发器类型获取描述错误");
+            return string.Empty;
+        }
+
+        switch (itemType)
+        {
+            case Item.ItemType.BulletItem:
+                if (specificType is BulletType bulletType)
+                {
+                    return bulletAttribute.GetDescription(bulletType);
+                }
+                else
+                {
+                    Debug.LogError($"子弹类型{(BulletType)specificType}错误,无法获取子弹描述");
+                    break;
+                }
+            case Item.ItemType.FoodItem:
+                if (specificType is FoodType foodType)
+                {
+                    return foodAttribute.GetDescription(foodType);
+                }
+                else
+                {
+                    Debug.LogError($"食物类型{(FoodType)specificType}错误,无法获取食物描述");
+                    break;
+                }
+            case Item.ItemType.SurroundItem:
+                if (specificType is SurroundType surroundType)
+                {
+                    return surroundAttribute.GetDescription(surroundType);
+                }
+                else
+                {
+                    Debug.LogError($"环绕物类型{(SurroundType)specificType}错误,无法获取环绕物描述");
+                    break;
+                }
+            case Item.ItemType.OtherItem:
+                if (specificType is OtherType otherType)
+                {
+                    return otherAttribute.GetDescription(otherType);
+                }
+                else
+                {
+                    Debug.LogError($"其他道具类型{(OtherType)specificType}错误,无法获取其他道具描述");
+                    break;
+                }
+            default:
+                Debug.LogError($"物品类型{itemType}错误或未实现,无法获取描述");
+                break;
+        }
+
+        return string.Empty;
     }
     #endregion
 }

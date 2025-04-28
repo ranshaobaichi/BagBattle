@@ -30,13 +30,14 @@ public abstract class Surrounding : MonoBehaviour
 
     protected float initSpeed;
     protected float speedUpTimer;
+    public void DestroySurrounding() => ObjectPool.Instance.PushObject(gameObject); // 归还对象池
 
     protected void Awake()
     {
         rigidbody = GetComponent<Rigidbody2D>();
     }
 
-    protected virtual void Start()
+    void OnEnable()
     {
         initialAngle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         currentAngle = initialAngle; // 初始化当前角度为初始角度
@@ -110,8 +111,6 @@ public abstract class Surrounding : MonoBehaviour
 
     public virtual void ApplyDamage(EnemyController target)  // 应用伤害
     {
-        if (target == null || !target.Live())
-            return;
         target.TakeDamage(surroundingBasicAttribute.damage);
     }
 
@@ -120,7 +119,7 @@ public abstract class Surrounding : MonoBehaviour
         if (collision.CompareTag("Enemy"))
         {
             EnemyController enemy = collision.GetComponent<EnemyController>();
-            if (enemy != null)
+            if (enemy != null && enemy.Live())
             {
                 ApplyDamage(enemy);
                 ApplyKnockBack(enemy);

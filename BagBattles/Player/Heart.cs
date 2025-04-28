@@ -17,12 +17,14 @@ public class Heart : MonoBehaviour
         image = GetComponent<Image>();
         image.preserveAspect  = true;
     }
+    public bool FullHealth => currentHealth == maxHealth;
+    public bool IsEmpty => currentHealth <= 0;
  
     public void Initialize(int capacity, int current = -1)
     {
-        if(capacity != -1)
+        if (capacity != -1)
             maxHealth = capacity;
-        if(current == -1)
+        if (current == -1)
             currentHealth = maxHealth;
         else
             currentHealth = current;
@@ -43,6 +45,14 @@ public class Heart : MonoBehaviour
         UpdateDisplay();
     }
 
+    public int RecoverHealth(int amount)
+    {
+        int actualRecovery = Mathf.Min(maxHealth - currentHealth, amount);
+        currentHealth += actualRecovery;
+        UpdateDisplay();
+        return actualRecovery;
+    }
+
     private void UpdateDisplay()
     {
         Debug.Log($"当前生命值: {currentHealth}");
@@ -56,6 +66,4 @@ public class Heart : MonoBehaviour
             _ => null
         };
     }
-
-    public bool IsEmpty => currentHealth <= 0;
 }

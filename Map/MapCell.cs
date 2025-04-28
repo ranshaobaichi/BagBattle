@@ -15,7 +15,7 @@ public class MapCell : MonoBehaviour
 
     private int cellRow; // 行
     private int cellColumn; // 列
-    private bool canBeSelected = true; // 是否可以被选取 -- 记录是否走过
+    private bool canBeSelected; // 是否可以被选取 -- 记录是否走过
     public CellType cellType; // 地图格子类型
 
     // 添加访问器方法
@@ -23,14 +23,17 @@ public class MapCell : MonoBehaviour
     public int GetColumn() => cellColumn;
     public bool IsSelected() => canBeSelected;
     public CellType GetCellType() => cellType;
-    public void SetInteractable(bool flag) => button.interactable = flag && canBeSelected; // 设置按钮是否可交互
+    public void SetInteractable(bool flag)
+    { 
+        button.interactable = flag && canBeSelected; // 设置按钮是否可交互
+    }
     public void SetColor(Color color) => image.color = color;
 
-    public void Initialize(int row, int column, bool canBeSelected = true, CellType cellType = CellType.Battle)
+    public void Initialize(int row, int column, bool cBSelected = true, CellType cellType = CellType.Battle)
     {
         cellRow = row;
         cellColumn = column;
-        this.canBeSelected = canBeSelected;
+        this.canBeSelected = cBSelected;
         this.cellType = cellType;
         if (canBeSelected == false)
         {

@@ -104,7 +104,7 @@ public abstract class TriggerInventoryItem : InventoryItem
             }
             else
                 Debug.LogError($"未绑定抽象物品类型");
-            item.triggerDectectFlag = true; // 触发器检测到物品后，设置该物品不可被触发器检测
+            item.triggerDectectFlag = true;
         }
 
         // 触发器工作完成

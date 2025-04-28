@@ -17,12 +17,12 @@ public class BulletSpawnerData
     public float maxLoadSpeed;
     public float minLoadSpeed;
     public float initAttackSpeed;
-    
+
     // 伤害加成
     public float permanent_damage_add_bonus = 0;
     public float temporary_damage_add_bonus_sum = 0;
     public List<Food.Bonus> temporary_damage_add_bonus_list = new List<Food.Bonus>();
-    
+
     public float permanent_damage_percentage_bonus = 0;
     public float temporary_damage_percentage_bonus_sum = 0;
     public List<Food.Bonus> temporary_damage_percentage_bonus_list = new List<Food.Bonus>();
@@ -32,6 +32,11 @@ public class BulletSpawnerData
     public float permanent_attack_speed_bonus = 0;
     public float temporary_attack_speed_bonus_sum = 0;
     public List<Food.Bonus> temporary_attack_speed_bonus_list = new List<Food.Bonus>();
+
+    // 攻击范围加成
+    public float permanent_attack_range_bonus = 0;
+    public float temporary_attack_range_bonus_sum = 0;
+    public List<Food.Bonus> temporary_attack_range_bonus_list = new List<Food.Bonus>();
 }
 
 public class BulletSpawner : MonoBehaviour
@@ -78,13 +83,21 @@ public class BulletSpawner : MonoBehaviour
     private float permanent_damage_percentage_bonus = 0;   // 永久伤害加成
     private float temporary_damage_percentage_bonus_sum = 0;   // 临时伤害加成
     [SerializeField] private LinkedList<Food.Bonus> temporary_damage_percentage_bonus = new();   // 临时伤害加成，波次结束后消失
+    private float next_shoot_damage_add_bonus = 0;   // 下次发射伤害加成
+    private float next_shoot_damage_percentage_bonus = 0;   // 下次发射伤害加成
 
     [Header("攻击速度加成")]
     private float permanent_attack_speed_bonus = 0;   // 记录永久攻击速度加成
     private float temporary_attack_speed_bonus_sum = 0;   // 记录临时攻击速度加成
     [SerializeField] private LinkedList<Food.Bonus> temporary_attack_speed_bonus = new();   // 临时攻击速度加成，波次结束后消失
     private float bonus_attack_speed;
-    // 添加基于时间的临时加成
+
+    [Header("攻击范围加成")]
+    public float permanent_attack_range_bonus = 0;
+    public float temporary_attack_range_bonus_sum = 0;
+    public LinkedList<Food.Bonus> temporary_attack_range_bonus = new();
+
+    [Header("添加基于时间的临时加成")]
     private LinkedList<(Food.FoodBonusType, Food.Bonus)> temporary_time_bonus = new();
 
     // [Header("装载速度加成")]
@@ -294,6 +307,8 @@ public class BulletSpawner : MonoBehaviour
         }
 
         Debug.Log("发射数量：" + cnt);
+        next_shoot_damage_add_bonus = 0; // 重置下次发射伤害加成
+        next_shoot_damage_percentage_bonus = 0; // 重置下次发射伤害加成
         StartCoroutine(SetFireFlagFalse(attackSpeed));
         fireEvent.Invoke();
     }
@@ -392,6 +407,8 @@ public class BulletSpawner : MonoBehaviour
     // 临时属性加成：获得时加入到链表中，并在属性中加成；回合结束时减少回合数，回合数为0时移除，并从属性中减去加成值；
     //              并在每回合结束时清除过期的加成    
 
+    public void NextShootDamageUpAdd(float val) => next_shoot_damage_add_bonus += val;
+    public void NextShootDamageUpPercent(float val) => next_shoot_damage_percentage_bonus += val;
     // 通用加成方法
     public void AddBonus(Food.FoodBonusType type, float value, Food.FoodDurationType foodDurationType, float rounds = 1f)
     {
@@ -446,6 +463,15 @@ public class BulletSpawner : MonoBehaviour
                     attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
                 }
                 break;
+            case Food.FoodBonusType.AttackRange:
+                attackRange += value;
+                if (foodDurationType == Food.FoodDurationType.Permanent)
+                    permanent_attack_range_bonus += value;
+                else if (foodDurationType == Food.FoodDurationType.TemporaryRounds)
+                    temporary_attack_range_bonus.AddLast(new Food.Bonus(value, rounds));
+                else if (foodDurationType == Food.FoodDurationType.TemporaryTime)
+                    temporary_time_bonus.AddLast((type, new Food.Bonus(value, rounds)));
+                break;
             default:
                 Debug.LogError("AddBonus: Invalid BonusType");
                 break;
@@ -464,7 +490,7 @@ public class BulletSpawner : MonoBehaviour
             return;
         }
         float dmg = bullet.bulletBasicAttribute.damage;
-        bullet.bulletBasicAttribute.damage = (dmg + permanent_damage_add_bonus + temporary_damage_add_bonus_sum) * (1 + permanent_damage_percentage_bonus + temporary_damage_percentage_bonus_sum);
+        bullet.bulletBasicAttribute.damage = (dmg + permanent_damage_add_bonus + temporary_damage_add_bonus_sum + next_shoot_damage_add_bonus) * (1 + permanent_damage_percentage_bonus + temporary_damage_percentage_bonus_sum + next_shoot_damage_percentage_bonus);
     }
 
     private IEnumerator ScanTemporyBonusList()
@@ -490,6 +516,9 @@ public class BulletSpawner : MonoBehaviour
                     case Food.FoodBonusType.AttackDamageByPercent:
                         temporary_damage_percentage_bonus_sum -= currentNode.Value.Item2.bonusValue;
                         break;
+                    case Food.FoodBonusType.AttackRange:
+                        attackRange -= currentNode.Value.Item2.bonusValue;
+                        break;
                     default:
                         Debug.LogError($"加成类型{currentNode.Value.Item1}在角色处不支持");
                         break;
@@ -505,6 +534,7 @@ public class BulletSpawner : MonoBehaviour
         var temporary_damage_add_bonus_decrease = temporary_damage_add_bonus.DecreaseRounds();
         var temporary_damage_percentage_bonus_decrease = temporary_damage_percentage_bonus.DecreaseRounds();
         var temporary_attack_speed_bonus_decrease = temporary_attack_speed_bonus.DecreaseRounds();
+        var temporary_attack_range_bonus_decrease = temporary_attack_range_bonus.DecreaseRounds();
         // temporary_load_speed_bonus_sum -= temporary_load_speed_bonus.DecreaseRounds();
 
         // 清除本回合限时加成
@@ -523,6 +553,9 @@ public class BulletSpawner : MonoBehaviour
                 case Food.FoodBonusType.AttackSpeed:
                     bonus_attack_speed -= currentNode.Value.Item2.bonusValue;
                     break;
+                case Food.FoodBonusType.AttackRange:
+                    temporary_attack_range_bonus_decrease += currentNode.Value.Item2.bonusValue;
+                    break;
                 default:
                     Debug.LogError($"加成类型{currentNode.Value.Item1}在BulletSpawner中不支持");
                     break;
@@ -537,9 +570,10 @@ public class BulletSpawner : MonoBehaviour
         bonus_attack_speed -= temporary_attack_speed_bonus_decrease;
         // 恢复属性值
         attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
+        attackRange -= temporary_attack_range_bonus_decrease;
         // loadSpeed = Mathf.Clamp(initLoadSpeed + permanent_load_speed_bonus + temporary_load_speed_bonus_sum, minLoadSpeed, maxLoadSpeed);
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
     #endif
     }
@@ -563,6 +597,10 @@ public class BulletSpawner : MonoBehaviour
         // temporary_load_speed_bonus.Clear();
         // temporary_load_speed_bonus_sum = 0;
 
+        temporary_attack_range_bonus.Clear();
+        temporary_attack_range_bonus_sum = 0;
+
+        temporary_time_bonus.Clear();
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
 #endif
@@ -607,7 +645,8 @@ public class BulletSpawner : MonoBehaviour
         bulletSpawnerData.temporary_damage_add_bonus_list = new List<Food.Bonus>(temporary_damage_add_bonus);
         bulletSpawnerData.temporary_damage_percentage_bonus_list = new List<Food.Bonus>(temporary_damage_percentage_bonus);
         bulletSpawnerData.temporary_attack_speed_bonus_list = new List<Food.Bonus>(temporary_attack_speed_bonus);
-        
+        bulletSpawnerData.temporary_attack_range_bonus_list = new List<Food.Bonus>(temporary_attack_range_bonus);
+
         // 将数据转换为JSON
         string jsonData = JsonUtility.ToJson(bulletSpawnerData, true);
         
@@ -648,7 +687,11 @@ public class BulletSpawner : MonoBehaviour
             bonus_attack_speed = loadedData.bonus_attack_speed;
             permanent_attack_speed_bonus = loadedData.permanent_attack_speed_bonus;
             temporary_attack_speed_bonus_sum = loadedData.temporary_attack_speed_bonus_sum;
-            
+
+            // 应用攻击范围加成
+            permanent_attack_range_bonus = loadedData.permanent_attack_range_bonus;
+            temporary_attack_range_bonus_sum = loadedData.temporary_attack_range_bonus_sum;
+
             // 清空并重建临时加成链表
             temporary_damage_add_bonus.Clear();
             foreach (var bonus in loadedData.temporary_damage_add_bonus_list)
@@ -668,6 +711,12 @@ public class BulletSpawner : MonoBehaviour
                 temporary_attack_speed_bonus.AddLast(bonus);
             }
             
+            temporary_attack_range_bonus.Clear();
+            foreach (var bonus in loadedData.temporary_attack_range_bonus_list)
+            {
+                temporary_attack_range_bonus.AddLast(bonus);
+            }
+
             Debug.Log("子弹系统数据已从以下位置加载: " + filePath);
         }
         else

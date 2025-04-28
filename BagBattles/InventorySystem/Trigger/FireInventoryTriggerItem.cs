@@ -24,6 +24,7 @@ public class FireInventoryTriggerItem : TriggerInventoryItem
 
         itemShape = ItemAttribute.Instance.GetItemShape(itemType, triggerType, fireTriggerType);
         triggerRange = ItemAttribute.Instance.GetTriggerRange(triggerType, fireTriggerType);
+        description = ItemAttribute.Instance.GetDescription(itemType, triggerType, fireTriggerType);
         InitializeDirection(ItemAttribute.Instance.GetItemDirection(itemType, triggerType, fireTriggerType));
         if (itemShape == InventoryItem.ItemShape.NONE ||
             itemDirection == InventoryItem.Direction.NONE)

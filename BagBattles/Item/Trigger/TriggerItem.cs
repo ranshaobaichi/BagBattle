@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using Assets.BagBattles.Types;
 using UnityEngine;
+using UnityEngine.Events;
 
 public abstract class TriggerItem : MonoBehaviour
 {
     [Header("触发器类道具")]
     public Dictionary<Item.ItemType, List<Item>> items = new Dictionary<Item.ItemType, List<Item>>();    // 触发器可触发的物品
+    public UnityEvent triggerEvent;
     #region 虚方法
     protected abstract void InitializeAttr(object specificType); // 初始化触发器属性
     public abstract void StartTrigger();
@@ -42,6 +44,7 @@ public abstract class TriggerItem : MonoBehaviour
         items[Item.ItemType.BulletItem] = new();
         items[Item.ItemType.FoodItem] = new();
         items[Item.ItemType.SurroundItem] = new();
+        items[Item.ItemType.OtherItem] = new();
 
         // 初始化触发器物品
         foreach (var (itemKey, itemValue) in triggerItem)
@@ -95,6 +98,20 @@ public abstract class TriggerItem : MonoBehaviour
                         items[Item.ItemType.SurroundItem].Add(tmp);
                     }
                     break;
+                case Item.ItemType.OtherItem:
+                    Debug.Log($"触发器初始化了{itemValue.Count}个其他类别道具");
+                    foreach (var (inventorySource, value) in itemValue)
+                    {
+                        if (value is not OtherType otherType)
+                        {
+                            Debug.LogError("触发器绑定了无效的其他类别类型" + value);
+                            continue;
+                        }
+                        OtherItem tmp = new(otherType);
+                        tmp.SetSourceInventoryItem(inventorySource);
+                        items[Item.ItemType.OtherItem].Add(tmp);
+                    }
+                    break;
                 default:
                     Debug.LogError($"触发器不支持的物品类型：{itemKey}");
                     throw new ArgumentOutOfRangeException();
@@ -129,12 +146,29 @@ public abstract class TriggerItem : MonoBehaviour
             Debug.Log("触发器没有物品可用");
             StopTrigger();
         }
+        else
+        {
+            Debug.Log("触发器触发物品成功");
+            triggerEvent?.Invoke();
+        }
     }
 
     public virtual void Destroy()
     {
         // 触发器销毁时的逻辑
         StopTrigger();
+
+        // 清除环绕物
+        foreach (var surround in items[Item.ItemType.SurroundItem])
+        {
+            if (surround == null || surround is not SurroundItem surroundItem)
+            {
+                Debug.LogError("触发器销毁的环绕物为空");
+                continue;
+            }
+            surroundItem.DestroySurroundItem();
+        }
+
         items.Clear();
         Debug.Log("触发器销毁");
     }
