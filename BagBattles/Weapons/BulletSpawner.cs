@@ -443,34 +443,43 @@ public class BulletSpawner : MonoBehaviour
                 }
                 break;
             case Food.FoodBonusType.AttackSpeed:
-                if (foodDurationType == Food.FoodDurationType.Permanent)
+                switch (foodDurationType)
                 {
-                    permanent_attack_speed_bonus += value;
-                    bonus_attack_speed += value;
-                    attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
+                    case Food.FoodDurationType.Permanent:
+                        permanent_attack_speed_bonus += value;
+                        break;
+                    case Food.FoodDurationType.TemporaryRounds:
+                        temporary_attack_speed_bonus.AddLast(new Food.Bonus(value, rounds));
+                        temporary_attack_speed_bonus_sum += value;
+                        break;
+                    case Food.FoodDurationType.TemporaryTime:
+                        temporary_time_bonus.AddLast((type, new Food.Bonus(value, rounds)));
+                        break;
+                    default:
+                        Debug.LogError("AddBonus: Invalid DurationType");
+                        break;
                 }
-                else if (foodDurationType == Food.FoodDurationType.TemporaryRounds)
-                {
-                    temporary_attack_speed_bonus.AddLast(new Food.Bonus(value, rounds));
-                    temporary_attack_speed_bonus_sum += value;
-                    bonus_attack_speed += value;
-                    attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
-                }
-                else if (foodDurationType == Food.FoodDurationType.TemporaryTime)
-                {
-                    temporary_time_bonus.AddLast((type, new Food.Bonus(value, rounds)));
-                    bonus_attack_speed += value;
-                    attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
-                }
+                bonus_attack_speed += value;
+                attackSpeed = Mathf.Clamp(bonus_attack_speed, minAttackSpeed, maxAttackSpeed);
                 break;
             case Food.FoodBonusType.AttackRange:
                 attackRange += value;
-                if (foodDurationType == Food.FoodDurationType.Permanent)
-                    permanent_attack_range_bonus += value;
-                else if (foodDurationType == Food.FoodDurationType.TemporaryRounds)
-                    temporary_attack_range_bonus.AddLast(new Food.Bonus(value, rounds));
-                else if (foodDurationType == Food.FoodDurationType.TemporaryTime)
-                    temporary_time_bonus.AddLast((type, new Food.Bonus(value, rounds)));
+                switch (foodDurationType)
+                {
+                    case Food.FoodDurationType.Permanent:
+                        permanent_attack_range_bonus += value;
+                        break;
+                    case Food.FoodDurationType.TemporaryRounds:
+                        temporary_attack_range_bonus.AddLast(new Food.Bonus(value, rounds));
+                        temporary_attack_range_bonus_sum += value;
+                        break;
+                    case Food.FoodDurationType.TemporaryTime:
+                        temporary_time_bonus.AddLast((type, new Food.Bonus(value, rounds)));
+                        break;
+                    default:
+                        Debug.LogError("AddBonus: Invalid DurationType");
+                        break;
+                }
                 break;
             default:
                 Debug.LogError("AddBonus: Invalid BonusType");

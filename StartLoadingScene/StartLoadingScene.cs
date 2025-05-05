@@ -21,11 +21,13 @@ public class StartLoadingScene : MonoBehaviour
         // 初始化管理器并标记为DontDestroyOnLoad
         if (InventoryManager.Instance == null)
         {
+            Debug.Log($"inventorySystemPrefab: {(inventorySystemPrefab != null ? "Assigned" : "NULL")}");
             GameObject invSystem = Instantiate(inventorySystemPrefab);
             DontDestroyOnLoad(invSystem);
             invSystem.name = inventorySystemPrefab.name; // 设置实例名称
             InventorySystem.Instance = invSystem.GetComponent<InventorySystem>();
             InventoryManager.Instance = invSystem.GetComponentInChildren<InventoryManager>();
+            Debug.Log($"InventoryManager.Instance: {(InventoryManager.Instance != null ? "Found" : "NULL")}");
         }
 
         if (PlayerController.Instance == null)

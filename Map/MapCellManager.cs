@@ -49,8 +49,7 @@ public class MapCellManager : MonoBehaviour
         public int targetPosY;
     }
 
-    private const string MAP_DATA_FILENAME = "MapData";
-    private const string MAP_DATA_PATH = "MapData";
+    private const string MAP_DATA_PATH = "mapData.json"; // 地图数据文件路径
 
     private void Awake()
     {
@@ -72,7 +71,6 @@ public class MapCellManager : MonoBehaviour
 
     public void InitializeMapCells()
     {
-        bool dataLoaded = false;
         if (mapCells == null || mapCells.Length == 0)
         {
             mapCells = new MapCell[mapRows, mapColumns]; // 初始化地图格子数组
@@ -91,12 +89,13 @@ public class MapCellManager : MonoBehaviour
         }
 
         // 尝试从Resources加载数据
-        TextAsset dataAsset = Resources.Load<TextAsset>(MAP_DATA_PATH);
-        if (dataAsset != null && PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 0) // 如果找到数据且不是新游戏
+        if (PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 0) // 如果找到数据且不是新游戏
         {
             try
             {
-                MapData mapData = JsonUtility.FromJson<MapData>(dataAsset.text);
+                string filePath = Path.Combine(Application.persistentDataPath, MAP_DATA_PATH);
+                string json = File.ReadAllText(filePath);
+                MapData mapData = JsonUtility.FromJson<MapData>(json);
 
                 foreach (MapCellData cellData in mapData.cells)
                 {
@@ -119,18 +118,15 @@ public class MapCellManager : MonoBehaviour
                 Debug.Log($"已从Resources加载地图数据，玩家位置: ({playerPosX}, {playerPosY})");
                 Debug.Log($"玩家格子选取状态：{mapCells[playerPosX, playerPosY].IsSelected()}");
 
-                dataLoaded = true;
             }
             catch (System.Exception e)
             {
                 Debug.LogError("加载地图数据失败: " + e.Message);
             }
         }
-
-        // 如果没有加载到数据，创建新文件
-        if (!dataLoaded)
+        else
         {
-            Debug.Log("未找到地图数据，创建新的地图数据");
+            Debug.Log("创建新的地图数据");
             StoreMapCellData();
             mapCells[playerPosX, playerPosY].Initialize(playerPosX, playerPosY, false, MapCell.CellType.Battle); // 设置玩家格子
         }
@@ -168,60 +164,9 @@ public class MapCellManager : MonoBehaviour
         mapData.targetPosY = targetPosY;
 
         string json = JsonUtility.ToJson(mapData, true);
-
-#if UNITY_EDITOR
-        // 在编辑器模式下，可以将数据写入Resources文件夹
-        string resourcesPath = "Assets/Resources";
-        string directoryPath = Path.Combine(Application.dataPath, "Resources");
-
-        // 确保Resources目录存在
-        if (!Directory.Exists(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-            AssetDatabase.Refresh();
-        }
-
-        // 保存JSON文件到Resources文件夹
-        string filePath = Path.Combine(resourcesPath, MAP_DATA_FILENAME + ".json");
+        string filePath = Path.Combine(Application.persistentDataPath, MAP_DATA_PATH);
         File.WriteAllText(filePath, json);
-        AssetDatabase.Refresh();
-        Debug.Log("地图数据已保存到Resources: " + filePath);
-#else
-        Debug.Log("注意：运行时无法写入Resources文件夹。数据变更将不会被保存。");
-#endif
-    }
-
-    public void LoadMapCellData()
-    {
-        TextAsset dataAsset = Resources.Load<TextAsset>(MAP_DATA_PATH);
-        if (dataAsset != null)
-        {
-            MapData mapData = JsonUtility.FromJson<MapData>(dataAsset.text);
-
-            // 加载格子数据
-            foreach (MapCellData cellData in mapData.cells)
-            {
-                if (cellData.row < mapRows && cellData.column < mapColumns)
-                {
-                    MapCell mapCell = mapCells[cellData.row, cellData.column];
-                    mapCell.Initialize(cellData.row, cellData.column, cellData.isSelected, cellData.cellType);
-                }
-            }
-
-            // 加载位置数据
-            playerPosX = mapData.playerPosX;
-            playerPosY = mapData.playerPosY;
-            startPosX = mapData.startPosX;
-            startPosY = mapData.startPosY;
-            targetPosX = mapData.targetPosX;
-            targetPosY = mapData.targetPosY;
-
-            Debug.Log($"已从Resources加载地图数据，玩家位置: ({playerPosX}, {playerPosY})");
-        }
-        else
-        {
-            Debug.LogWarning("在Resources文件夹中未找到地图数据");
-        }
+        Debug.Log($"地图数据已保存到: {filePath}");
     }
 
     public void SetPlayerPosition(int x, int y)

@@ -90,6 +90,7 @@ public class InventoryManager : MonoBehaviour
     [NonSerialized] public List<SurroundInventoryItem> surroundInInventory = new(); // 仓库中环绕物列表
     [NonSerialized] public List<OtherInventoryItem> otherInInventory = new(); // 仓库中环绕物列表
 
+    public List<Transform> dropPoints = new(); // 物品掉落点列表
     #region 对外接口
     public int GetGridHeight() => rows; // 修正以获取网格高度
     public int GetGridWidth() => columns; // 修正以获取网格宽度
@@ -121,6 +122,7 @@ public class InventoryManager : MonoBehaviour
     // 并将触发器添加到角色
     public void TriggerTriggerItem()
     {
+        Debug.Log($"触发器添加到角色了{triggerInInventory.Count}个触发器道具");
         foreach (var triggerItem in triggerInInventory)
         {
             Debug.Log($"触发器当前方向：{triggerItem.GetDirection()}，触发格数：{triggerItem.GetTriggerRange()}");
@@ -147,6 +149,9 @@ public class InventoryManager : MonoBehaviour
             Debug.LogError($"物品类型{itemType}调用错误，functionType或specificType为空");
             return null;
         }
+
+        Transform dropPoint = dropPoints != null ? dropPoints[UnityEngine.Random.Range(0, dropPoints.Count)] : inventoryPanel.transform;
+
         if (functionType is Trigger.TriggerType triggerType)
         {
             switch (triggerType)
@@ -164,7 +169,7 @@ public class InventoryManager : MonoBehaviour
                             return null;
                         }
                         // 生成物品并添加组件
-                        ret = Instantiate(itemPrefab, InventorySystem.transform);
+                        ret = Instantiate(itemPrefab, dropPoint);
                         FireInventoryTriggerItem fireInventoryTriggerItem = ret.AddComponent<FireInventoryTriggerItem>();
                         if (!fireInventoryTriggerItem.Initialize(fireTriggerType))
                         {
@@ -185,7 +190,6 @@ public class InventoryManager : MonoBehaviour
                     if (specificType is TimeTriggerType timeTriggerType)
                     {
                         Debug.Log("DropItem called with param: " + itemType + ", " + triggerType + ", " + timeTriggerType);
-                        // TODO:生成位置
                         InventoryItem.ItemShape itemShape = ItemAttribute.Instance.GetItemShape(itemType, triggerType, timeTriggerType);
                         GameObject itemPrefab = GetGameobjectByShape(itemShape);
                         if (itemPrefab == null)
@@ -194,7 +198,7 @@ public class InventoryManager : MonoBehaviour
                             return null;
                         }
                         // 生成物品并添加组件
-                        ret = Instantiate(itemPrefab, InventorySystem.transform);
+                        ret = Instantiate(itemPrefab, dropPoint);
                         TimeInventoryTriggerItem timeInventoryTriggerItem = ret.AddComponent<TimeInventoryTriggerItem>();
                         if (!timeInventoryTriggerItem.Initialize(timeTriggerType))
                         {
@@ -208,6 +212,35 @@ public class InventoryManager : MonoBehaviour
                     else
                     {
                         Debug.LogError($"触发器类型{(Trigger.TriggerType)functionType}下的具体类型{specificType}错误,无法获取触发器属性");
+                    }
+                    break;
+                case Trigger.TriggerType.ByOtherTrigger:
+                    if (specificType is ByOtherTriggerType otherTriggerType)
+                    {
+                        Debug.Log("DropItem called with param: " + itemType + ", " + triggerType + ", " + otherTriggerType);
+                        InventoryItem.ItemShape itemShape = ItemAttribute.Instance.GetItemShape(itemType, triggerType, otherTriggerType);
+                        GameObject itemPrefab = GetGameobjectByShape(itemShape);
+                        if (itemPrefab == null)
+                        {
+                            Debug.LogError("物品预制体未找到");
+                            return null;
+                        }
+                        // 生成物品并添加组件
+                        ret = Instantiate(itemPrefab, dropPoint);
+                        ByOtherInventoryTriggerItem otherInventoryTriggerItem = ret.AddComponent<ByOtherInventoryTriggerItem>();
+                        if (!otherInventoryTriggerItem.Initialize(otherTriggerType))
+                        {
+                            Debug.LogError("ByOtherInventoryTriggerItem initialization failed.");
+                            Destroy(ret);
+                            return null;
+                        }
+                        // 将生成物体加入管理列表中
+                        triggerInInventory.Add(otherInventoryTriggerItem);
+                    }
+                    else
+                    {
+                        Debug.LogError($"触发器类型{(Trigger.TriggerType)functionType}下的具体类型{specificType}错误,无法获取触发器属性");
+                        return null;
                     }
                     break;
                 default:
@@ -231,6 +264,8 @@ public class InventoryManager : MonoBehaviour
     public GameObject DropItem(Item.ItemType itemType, object specificType)
     {
         GameObject ret = null;
+
+        Transform dropPoint = dropPoints != null ? dropPoints[UnityEngine.Random.Range(0, dropPoints.Count)] : inventoryPanel.transform;
         switch (itemType)
         {
             case Item.ItemType.BulletItem:
@@ -254,7 +289,7 @@ public class InventoryManager : MonoBehaviour
                     return null;
                 }
                 // 生成物品并添加组件
-                ret = Instantiate(bulletItemPrefab, InventorySystem.transform);
+                ret = Instantiate(bulletItemPrefab, dropPoint);
                 BulletInventoryItem bulletInventoryItem = ret.AddComponent<BulletInventoryItem>();
                 if (!bulletInventoryItem.Initialize(bulletType))
                 {
@@ -285,7 +320,7 @@ public class InventoryManager : MonoBehaviour
                     return null;
                 }
                 // 生成物品并添加组件
-                ret = Instantiate(foodItemPrefab, InventorySystem.transform);
+                ret = Instantiate(foodItemPrefab, dropPoint);
                 FoodInventoryItem foodInventoryItem = ret.AddComponent<FoodInventoryItem>();
                 if (!foodInventoryItem.Initialize(foodType))
                 {
@@ -316,7 +351,7 @@ public class InventoryManager : MonoBehaviour
                     return null;
                 }
                 // 生成物品并添加组件
-                ret = Instantiate(surroundItemPrefab, InventorySystem.transform);
+                ret = Instantiate(surroundItemPrefab, dropPoint);
                 SurroundInventoryItem surroundInventoryItem = ret.AddComponent<SurroundInventoryItem>();
                 if (!surroundInventoryItem.Initialize(surroundType))
                 {
@@ -347,7 +382,7 @@ public class InventoryManager : MonoBehaviour
                     return null;
                 }
                 // 生成物品并添加组件
-                ret = Instantiate(otherItemPrefab, InventorySystem.transform);
+                ret = Instantiate(otherItemPrefab, dropPoint);
                 OtherInventoryItem otherInventoryItem = ret.AddComponent<OtherInventoryItem>();
                 if (!otherInventoryItem.Initialize(otherType))
                 {
@@ -716,17 +751,24 @@ public class InventoryManager : MonoBehaviour
                 .Select(gridPos => gridPos.gridPos)
                 .ToList();
             // 根据触发器类型设置functionType和specificType
-            if (item is FireInventoryTriggerItem fireTrigger)
+            switch (item.GetTriggerType())
             {
-                itemData.functionType = (int)Trigger.TriggerType.ByFireTimes;
-                itemData.specificType = (int)fireTrigger.GetSpecificType();
+                case Trigger.TriggerType.ByFireTimes:
+                    itemData.functionType = (int)Trigger.TriggerType.ByFireTimes;
+                    itemData.specificType = (int)item.GetSpecificType();
+                    break;
+                case Trigger.TriggerType.ByTime:
+                    itemData.functionType = (int)Trigger.TriggerType.ByTime;
+                    itemData.specificType = (int)item.GetSpecificType();
+                    break;
+                case Trigger.TriggerType.ByOtherTrigger:
+                    itemData.functionType = (int)Trigger.TriggerType.ByOtherTrigger;
+                    itemData.specificType = (int)item.GetSpecificType();
+                    break;
+                default:
+                    Debug.LogError($"未知触发器类型: {item.GetTriggerType()}");
+                    break;
             }
-            else if (item is TimeInventoryTriggerItem timeTrigger)
-            {
-                itemData.functionType = (int)Trigger.TriggerType.ByTime;
-                itemData.specificType = (int)timeTrigger.GetSpecificType();
-            }
-
             data.triggers.Add(itemData);
         }
         
@@ -846,16 +888,13 @@ public class InventoryManager : MonoBehaviour
             GameObject item = null;
             // 根据触发器类型设置functionType和specificType
             // 生成触发器
-            if (triggerType == Trigger.TriggerType.ByFireTimes)
+            item = triggerType switch
             {
-                FireTriggerType fireType = (FireTriggerType)itemData.specificType;
-                item = DropItem(Item.ItemType.TriggerItem, triggerType, fireType);
-            }
-            else if (triggerType == Trigger.TriggerType.ByTime)
-            {
-                TimeTriggerType timeType = (TimeTriggerType)itemData.specificType;
-                item = DropItem(Item.ItemType.TriggerItem, triggerType, timeType);
-            }
+                Trigger.TriggerType.ByFireTimes => DropItem(Item.ItemType.TriggerItem, triggerType, (FireTriggerType)itemData.specificType),
+                Trigger.TriggerType.ByTime => DropItem(Item.ItemType.TriggerItem, triggerType, (TimeTriggerType)itemData.specificType),
+                Trigger.TriggerType.ByOtherTrigger => DropItem(Item.ItemType.TriggerItem, triggerType, (ByOtherTriggerType)itemData.specificType),
+                _ => throw new System.ArgumentException($"未知触发器类型: {triggerType}")
+            };
 
             // 设置位置等其他属性
             if (item != null)

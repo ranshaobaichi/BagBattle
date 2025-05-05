@@ -8,7 +8,7 @@ public abstract class TriggerItem : MonoBehaviour
 {
     [Header("触发器类道具")]
     public Dictionary<Item.ItemType, List<Item>> items = new Dictionary<Item.ItemType, List<Item>>();    // 触发器可触发的物品
-    public UnityEvent triggerEvent;
+    public UnityEvent triggerEvent = new UnityEvent(); // 触发器触发事件
     #region 虚方法
     protected abstract void InitializeAttr(object specificType); // 初始化触发器属性
     public abstract void StartTrigger();
@@ -21,18 +21,7 @@ public abstract class TriggerItem : MonoBehaviour
     public void LaunchTrigger()
     {
         Debug.Log("触发器开始工作");
-        bool flag = false;
-        foreach (var item in items.Values)
-            if (item.Count > 0)
-            {
-                flag = true;
-                break;
-            }
-        // 触发器的使用逻辑
-        if (flag)
-            StartTrigger();
-        else
-            Debug.Log("触发器没有物品可用");
+        StartTrigger();
     }
     public void Initialize(Guid guid, object specificType, Dictionary<Item.ItemType, List<(InventoryItem inventorySource, object specificType)>> triggerItem)
     {
@@ -122,7 +111,6 @@ public abstract class TriggerItem : MonoBehaviour
     {
         Debug.Log("触发器触发物品");
         // 触发器的触发逻辑
-        bool flag = false;
         foreach (var itemList in items)
         {
             foreach (var item in itemList.Value)
@@ -132,25 +120,29 @@ public abstract class TriggerItem : MonoBehaviour
                     Debug.LogError("触发器触发的物品为空");
                     continue;
                 }
-                flag = true;
                 item.UseItem();
             }
+            if (itemList.Key == Item.ItemType.FoodItem)
+            {
+                for (int i = itemList.Value.Count - 1; i >= 0; i--)
+                {
+                    var item = itemList.Value[i];
+                    if (item is FoodItem foodItem && foodItem.foodItemAttributes.destroyCount == 0)
+                    {
+                        items[Item.ItemType.FoodItem].Remove(item);
+                        InventoryManager.Instance.RemoveFoodItem(item.sourceInventoryItem as FoodInventoryItem);
+                        if (items[Item.ItemType.FoodItem].Count == 0)
+                        {
+                            items.Remove(Item.ItemType.FoodItem);
+                            Debug.Log("触发器触发的所有食物道具已被销毁");
+                        }
+                    }
+                }
+            }
         }
-        if (items.ContainsKey(Item.ItemType.FoodItem))
-        {
-            items[Item.ItemType.FoodItem].Clear();
-            items.Remove(Item.ItemType.FoodItem);
-        }
-        if (!flag)
-        {
-            Debug.Log("触发器没有物品可用");
-            StopTrigger();
-        }
-        else
-        {
-            Debug.Log("触发器触发物品成功");
-            triggerEvent?.Invoke();
-        }
+
+        Debug.Log("触发器触发物品成功");
+        triggerEvent?.Invoke();
     }
 
     public virtual void Destroy()

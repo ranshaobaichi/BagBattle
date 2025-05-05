@@ -5,6 +5,7 @@
                 "fireCountTriggerAttribute": {
                     "triggerRange": 2,
                     "description": "",
+                    "dropWeight": 0,
                     "fireCount": 1,
                     "fireTriggerType": 0
                 },
@@ -14,7 +15,8 @@
             {
                 "fireCountTriggerAttribute": {
                     "triggerRange": 1,
-                    "description": "",
+                    "description": "测试用触发器",
+                    "dropWeight": 0,
                     "fireCount": 1,
                     "fireTriggerType": 1
                 },
@@ -27,11 +29,36 @@
                 "timeTriggerAttribute": {
                     "triggerRange": 2,
                     "description": "这是你的基础触发器",
+                    "dropWeight": 0,
                     "triggerTime": 3.0,
                     "timeTriggerType": 0
                 },
                 "timeTriggerShape": 1,
                 "timeTriggerDirection": 1
+            },
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 1,
+                    "description": "测试用触发器",
+                    "dropWeight": 0,
+                    "triggerTime": 0.5,
+                    "timeTriggerType": 1
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            }
+        ],
+        "byOtherTriggerAttributes": [
+            {
+                "byOtherTriggerAttribute": {
+                    "triggerRange": 1,
+                    "description": "测试",
+                    "dropWeight": 0,
+                    "requiredTriggerCount": 3,
+                    "byOtherTriggerType": 0
+                },
+                "byOtherTriggerShape": 1,
+                "byOtherTriggerDirection": 1
             }
         ]
     },
@@ -44,7 +71,8 @@
                     "specificBulletType": 0,
                     "bulletType": 1,
                     "description": "这是一发普通子弹",
-                    "bulletCount": 1
+                    "bulletCount": 1,
+                    "dropWeight": 0
                 }
             }
         ]
@@ -56,15 +84,17 @@
                 "itemDirection": 1,
                 "foodItemAttribute": {
                     "specificFoodType": 0,
-                    "description": "",
+                    "destroyCount": 1,
+                    "description": "加速加速，测试用",
                     "foodItemAttributes": [
                         {
-                            "foodBonusType": 1,
-                            "foodBonusValue": 1.0,
+                            "foodBonusType": 6,
+                            "foodBonusValue": 99.0,
                             "foodDurationType": 3,
-                            "timeLeft": 10.0
+                            "timeLeft": 5.0
                         }
-                    ]
+                    ],
+                    "dropWeight": 0
                 }
             }
         ]
@@ -81,6 +111,7 @@
                     "surroundingCount": 1,
                     "surroundingDuration": 1.0,
                     "surroundingSpeedPercent": 1.0,
+                    "dropWeight": 0,
                     "surroundingPrefab": {
                         "instanceID": 0
                     }
@@ -96,6 +127,7 @@
                     "surroundingCount": 1,
                     "surroundingDuration": 1.0,
                     "surroundingSpeedPercent": 1.0,
+                    "dropWeight": 0,
                     "surroundingPrefab": {
                         "instanceID": 0
                     }
@@ -113,7 +145,8 @@
                     "specificOtherType": 0,
                     "otherItemPrefab": {
                         "instanceID": 0
-                    }
+                    },
+                    "dropWeight": 0
                 }
             },
             {
@@ -124,7 +157,8 @@
                     "specificOtherType": 2,
                     "otherItemPrefab": {
                         "instanceID": 0
-                    }
+                    },
+                    "dropWeight": 0
                 }
             },
             {
@@ -135,7 +169,8 @@
                     "specificOtherType": 1,
                     "otherItemPrefab": {
                         "instanceID": 0
-                    }
+                    },
+                    "dropWeight": 0
                 }
             }
         ]

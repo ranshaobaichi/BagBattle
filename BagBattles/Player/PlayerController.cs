@@ -83,6 +83,11 @@ public class PlayerController : MonoBehaviour
                 fireTriggerItem.Initialize(item.inventoryID, item.GetSpecificType(), item.triggerItems);
                 triggerItems.Add(fireTriggerItem);
                 break;
+            case Trigger.TriggerType.ByOtherTrigger:
+                ByOtherTriggerItem otherTriggerItem = triggerGameObject.AddComponent<ByOtherTriggerItem>();
+                otherTriggerItem.Initialize(item.inventoryID, item.GetSpecificType(), item.triggerItems);
+                triggerItems.Add(otherTriggerItem);
+                break;
             default:
                 Debug.LogError($"触发器类型{type}不支持");
                 break;
@@ -117,14 +122,6 @@ public class PlayerController : MonoBehaviour
         BulletSpawner.Instance.EndFire();
         // 结束并清除触发器
         DestroyAllTriggers();
-
-        
-        // 结束枪械模组
-        Component[] triggerComponents = triggerGameObject.GetComponents<TriggerItem>();
-        foreach (var item in triggerComponents)
-        {
-            Destroy(item);
-        }
         // 移除临时加成
         DecreaseTemporaryBonus();
         HealthController.Instance.DecreaseTemporaryBonus();
@@ -271,6 +268,9 @@ public class PlayerController : MonoBehaviour
         foreach (var item in triggerItems)
             item.Destroy();
         triggerItems.Clear();
+        Destroy(triggerGameObject);
+        triggerGameObject = new GameObject("TriggerGameObject");
+        triggerGameObject.transform.SetParent(transform);
     }
     #endregion
 
@@ -295,16 +295,14 @@ public class PlayerController : MonoBehaviour
                     case Food.FoodDurationType.TemporaryRounds:
                         temporary_speed_bonus.AddLast(new Food.Bonus(value, timeLeft));
                         temporary_speed_bonus_sum += value;
-                        bonus_speed += value;
-                        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
                         break;
                     case Food.FoodDurationType.TemporaryTime:
-                        bonus_speed += value;
-                        speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
                         temporary_time_bonus.AddLast((type, new Food.Bonus(value, timeLeft)));
                         Debug.Log($"加成类型{type}剩余时间: {timeLeft}");
                         break;
                 }
+                bonus_speed += value;
+                speed = Mathf.Clamp(bonus_speed, minSpeed, maxSpeed);
                 break;
 
             // 枪械子弹加成
@@ -444,15 +442,6 @@ public class PlayerController : MonoBehaviour
             permanent_speed_bonus = loadedData.playerBonusData.permanent_speed_bonus;
             temporary_speed_bonus = loadedData.playerBonusData.temporary_speed_bonus;
             temporary_speed_bonus_sum = loadedData.playerBonusData.temporary_speed_bonus_sum;
-            
-            // 清除现有触发器
-            DestroyAllTriggers();
-
-            foreach (var triggerGuid in loadedData.triggerGuids)
-            {
-                TriggerInventoryItem triggerInventoryItem = InventoryManager.Instance.GetTriggerInventoryItemByGuid(Guid.Parse(triggerGuid));
-                AddTriggerItem(triggerInventoryItem);
-            }            
             Debug.Log("Player data loaded from: " + filePath);
         }
         else

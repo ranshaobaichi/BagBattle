@@ -11,6 +11,7 @@ public class InventoryManagerEditor : Editor
     private Trigger.TriggerType selectedTriggerType;
     private FireTriggerType selectedFireTriggerType;
     private TimeTriggerType selectedTimeTriggerType;
+    private ByOtherTriggerType selectedByOtherTriggerType;
     // 子弹类型
     private BulletType selectedBulletType;
     // 食物类型
@@ -51,6 +52,10 @@ public class InventoryManagerEditor : Editor
                     case Trigger.TriggerType.ByTime:
                         // 添加其他触发器类型的选项
                         selectedTimeTriggerType = (TimeTriggerType)EditorGUILayout.EnumPopup("时间触发器类型", selectedTimeTriggerType);
+                        selected = true;
+                        break;
+                    case Trigger.TriggerType.ByOtherTrigger:
+                        selectedByOtherTriggerType = (ByOtherTriggerType)EditorGUILayout.EnumPopup("其他触发器类型", selectedByOtherTriggerType);
                         selected = true;
                         break;
                     default:
@@ -127,6 +132,7 @@ public class InventoryManagerEditor : Editor
                     {
                         Trigger.TriggerType.ByFireTimes => selectedFireTriggerType,
                         Trigger.TriggerType.ByTime => selectedTimeTriggerType,
+                        Trigger.TriggerType.ByOtherTrigger => selectedByOtherTriggerType,
                         _ => null,
                     };
                     Debug.Log("生成触发器物品, functionType: " + functionType + ", specificType: " + specificType);

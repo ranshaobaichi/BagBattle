@@ -69,6 +69,7 @@ public class Trigger
             triggerType = type;
             triggerRange = TriggerRange.None;
         }
+        [Header("掉落权重")] [Range(0, 9)] public int dropWeight;
     }
 
     // 时间触发属性类

@@ -167,12 +167,36 @@ public class TooltipManager : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(panelRectTransform);
     }
     
+    public void ShowByOtherTriggerTooltip(Trigger.ByOtherTriggerAttribute triggerAttr)
+    {
+        ClearAttributes();
+        titleText.text = triggerAttr.byOtherTriggerType.ToString();
+        descriptionText.text = triggerAttr.description;
+        
+        AddAttribute("触发器类型", triggerAttr.byOtherTriggerType.ToString());
+        var triggerRange = triggerAttr.triggerRange switch
+        {
+            Trigger.TriggerRange.SingleCell => "单格",
+            Trigger.TriggerRange.DoubleCell => "两格",
+            Trigger.TriggerRange.TripleCell => "三格",
+            Trigger.TriggerRange.FullRow => "整行",
+            Trigger.TriggerRange.FourStraightSingleCell => "四格",
+            Trigger.TriggerRange.NineGrid => "九宫格",
+            Trigger.TriggerRange.Cross => "十字形",
+            _ => triggerAttr.triggerRange.ToString()
+        };
+        AddAttribute("触发范围", triggerRange);
+        
+        tooltipPanel.SetActive(true);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(panelRectTransform);
+    }
+
     public void ShowOtherTooltip(OtherItemAttribute otherAttr)
     {
         ClearAttributes();
         titleText.text = otherAttr.specificOtherType.ToString();
         descriptionText.text = otherAttr.description;
-        
+
         tooltipPanel.SetActive(true);
         LayoutRebuilder.ForceRebuildLayoutImmediate(panelRectTransform);
     }

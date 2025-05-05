@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,7 +35,6 @@ public class EnemyController : MonoBehaviour
     protected SpriteRenderer spriteRenderer;
     protected bool isFlashing;
 
-
     [Header("属性标志位")]
     protected bool live = true;
     protected bool invincible_flag = false;
@@ -43,18 +43,20 @@ public class EnemyController : MonoBehaviour
     protected bool ice_flag;
     protected bool knockback_flag;
 
-
     [Header("计时器")]
     protected float attack_timer;
     protected float invincible_timer;
     protected float fire_timer;
     protected float ice_timer;
 
-
     [Header("组件")]
     public Text health_text;
     public Rigidbody2D rb;
 
+    [Header("敌人图像")]
+    [Tooltip("序列帧切换时间")] public float enemySpriteChangeTime = 0.1f;
+    [Tooltip("敌人不同序列帧")] public List<Sprite> enemySprites = new List<Sprite>();
+    protected int currentSpriteIdx;
     #endregion
 
     #region 基础控制
@@ -83,6 +85,9 @@ public class EnemyController : MonoBehaviour
 
         spriteRenderer.color = originalColor;
         isFlashing = false;
+
+        currentSpriteIdx = 0;
+        InvokeRepeating(nameof(UpdateSprite), enemySpriteChangeTime, enemySpriteChangeTime);
     }
 
     public void Awake()
@@ -122,6 +127,15 @@ public class EnemyController : MonoBehaviour
         }
         find_way();
         Update_status();
+    }
+
+    protected virtual void OnDisable()
+    {
+        CancelInvoke(nameof(UpdateSprite));
+        rb.velocity = Vector2.zero;
+        live = false;
+        attack_flag = false;
+        invincible_flag = false;
     }
 
     protected virtual void find_way()
@@ -251,6 +265,13 @@ public class EnemyController : MonoBehaviour
                 StopCoroutine(TakeFireDamage());
             }
         }
+    }
+
+    protected virtual void UpdateSprite()
+    {
+        if (enemySprites.Count == 0) return;
+        currentSpriteIdx = (currentSpriteIdx + 1) % enemySprites.Count;
+        spriteRenderer.sprite = enemySprites[currentSpriteIdx];
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D collision)

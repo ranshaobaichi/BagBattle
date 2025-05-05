@@ -9,11 +9,11 @@ public class Food
     public enum FoodBonusType
     {
         None,
-        [Tooltip("按值增加伤害")][Description("按值增加伤害")] AttackDamageByValue,
+        [Tooltip("按值增加伤害")] [Description("按值增加伤害")] AttackDamageByValue,
         [Tooltip("按百分比增加伤害")] AttackDamageByPercent,
         [Tooltip("按百分比增加攻击范围")] AttackRange,
-        [Tooltip("按值增加发射速度")][Description("按值增加发射速度")] AttackSpeed,
-        [Tooltip("按值增加装载速度")][Description("按值增加装载速度")] LoadSpeed,
+        [Tooltip("按值增加发射速度")] [Description("按值增加发射速度")] AttackSpeed,
+        [Tooltip("按值增加装载速度")] [Description("按值增加装载速度")] LoadSpeed,
         [Tooltip("按百分比增加速度")] Speed,
         [Tooltip("增加血量颗数")] HealthUp,
         [Tooltip("回复血量")] HealthRecover,

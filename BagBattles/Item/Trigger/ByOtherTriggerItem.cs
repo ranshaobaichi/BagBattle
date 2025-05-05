@@ -24,6 +24,7 @@ public class ByOtherTriggerItem : TriggerItem
             Debug.LogError("触发器属性未初始化");
             return;
         }
+        currentByOtherCount = 0; // 重置开火次数
         // 监听开火事件
         foreach (var trigger in PlayerController.Instance.triggerItems)
         {
@@ -54,8 +55,8 @@ public class ByOtherTriggerItem : TriggerItem
         Debug.Log($"当前其他触发器触发次数：{currentByOtherCount}");
         if (currentByOtherCount >= byOtherTriggerAttribute.requiredTriggerCount)
         {
+            currentByOtherCount = 0;
             TriggerItems();
-            currentByOtherCount = 0; // 重置开火次数
         }
     }
 }

@@ -17,7 +17,7 @@ public abstract class Item
         // Add other item types here
     }
     
-    protected InventoryItem sourceInventoryItem; // 对应仓库中物品
+    public InventoryItem sourceInventoryItem; // 对应仓库中物品
     public abstract void UseItem(); // 使用道具
     public abstract object GetSpecificItemType(); // 获取具体的道具类型
     public ItemType itemType; // 道具类型

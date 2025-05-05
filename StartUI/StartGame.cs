@@ -13,6 +13,10 @@ public class StartGame : MonoBehaviour
     public Button quitGameButton;
 
     #region 按钮事件
+    public void Awake()
+    {
+        
+    }
     public void Start()
     {
         // 设置按钮事件

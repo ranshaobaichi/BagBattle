@@ -33,7 +33,8 @@ public class FoodItem : Item
             PlayerController.Instance.AddBonus(foodItemAttribute);
             Debug.Log($"Applied bonus: {foodItemAttribute.foodBonusValue} of type: {foodItemAttribute.foodBonusType}");
         }
-        //TODO: 食物道具使用后删除
-        InventoryManager.Instance.RemoveFoodItem(sourceInventoryItem as FoodInventoryItem);
+        if (!(foodItemAttributes.destroyCount == -1 && foodItemAttributes.destroyCount == 0))
+            foodItemAttributes.destroyCount--;
+        // InventoryManager.Instance.RemoveFoodItem(sourceInventoryItem as FoodInventoryItem);
     }
 }

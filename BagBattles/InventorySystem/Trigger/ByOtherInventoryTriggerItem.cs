@@ -1,6 +1,6 @@
 using UnityEngine;
 using Assets.BagBattles.Types;
-public class ByOtherinventoryTriggerItem : TriggerInventoryItem
+public class ByOtherInventoryTriggerItem : TriggerInventoryItem
 {
     public ByOtherTriggerType byOtherTriggerType;
 

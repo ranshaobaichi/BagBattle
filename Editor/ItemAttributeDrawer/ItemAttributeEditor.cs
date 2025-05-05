@@ -17,10 +17,17 @@ public class ItemAttributeEditor : Editor
     private SerializedProperty foodAttributeProperty;
     private SerializedProperty surroundAttributeProperty;
     private SerializedProperty otherAttributeProperty;
+    private SerializedProperty typeDropWeightsProperty;
     #endregion
 
     #region 折叠状态
     // 使用EditorPrefs来保存折叠状态，解决折叠菜单无法展开的问题
+    private bool ShowDropWeightFoldout
+    {
+        get { return EditorPrefs.GetBool("ItemAttributeEditor_DropWeightFoldout", false); }
+        set { EditorPrefs.SetBool("ItemAttributeEditor_DropWeightFoldout", value); }
+    }
+
     private bool ShowTriggerFoldout
     {
         get { return EditorPrefs.GetBool("ItemAttributeEditor_TriggerFoldout", false); }
@@ -78,6 +85,8 @@ public class ItemAttributeEditor : Editor
         foodAttributeProperty = serializedObject.FindProperty("foodAttribute");
         surroundAttributeProperty = serializedObject.FindProperty("surroundAttribute");
         otherAttributeProperty = serializedObject.FindProperty("otherAttribute");
+
+        typeDropWeightsProperty = serializedObject.FindProperty("typeDropWeights");
     }
 
     public override void OnInspectorGUI()
@@ -88,6 +97,84 @@ public class ItemAttributeEditor : Editor
         // 保存GUI变更状态
         EditorGUI.BeginChangeCheck();
         serializedObject.Update();
+
+        GUILayout.Space(10);
+
+        // 不同ItemType掉落权重
+        bool dropWeightFoldout = ShowDropWeightFoldout;
+        dropWeightFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(dropWeightFoldout, "不同道具类型掉落权重");
+        ShowDropWeightFoldout = dropWeightFoldout;
+
+        if (dropWeightFoldout)
+        {
+            EditorGUI.indentLevel++;
+            
+            // 确保typeDropWeights长度与ItemType枚举数量匹配
+            int enumCount = System.Enum.GetValues(typeof(Item.ItemType)).Length;
+            
+            // 如果列表为null或长度不匹配，初始化列表
+            if (typeDropWeightsProperty.arraySize != enumCount)
+            {
+                typeDropWeightsProperty.arraySize = enumCount;
+                // 设置默认权重值
+                for (int i = 0; i < enumCount; i++)
+                {
+                    typeDropWeightsProperty.GetArrayElementAtIndex(i).intValue = 1;
+                }
+            }
+            
+            // 创建一个表格样式的布局
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            // 表头
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField("物品类型", EditorStyles.boldLabel, GUILayout.Width(150));
+                EditorGUILayout.LabelField("掉落权重", EditorStyles.boldLabel, GUILayout.Width(100));
+                GUILayout.FlexibleSpace();
+            }
+            
+            // 为每个枚举值创建一个编辑行
+            foreach (Item.ItemType itemType in System.Enum.GetValues(typeof(Item.ItemType)))
+            {
+                // 跳过None类型
+                if (itemType == Item.ItemType.None)
+                    continue;
+                    
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    // 显示物品类型名称
+                    EditorGUILayout.LabelField(itemType.ToString(), GUILayout.Width(150));
+                    
+                    // 获取对应索引并显示权重编辑字段
+                    int index = (int)itemType;
+                    if (index < typeDropWeightsProperty.arraySize)
+                    {
+                        SerializedProperty weightProperty = typeDropWeightsProperty.GetArrayElementAtIndex(index);
+                        
+                        // 权重编辑字段，最小值为0，无上限
+                        EditorGUI.BeginChangeCheck();
+                        int newValue = EditorGUILayout.IntSlider(weightProperty.intValue, 0, 20, GUILayout.Width(150));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            weightProperty.intValue = newValue;
+                        }
+                        
+                        // 显示百分比
+                        float totalWeight = GetTotalWeight();
+                        float percentage = totalWeight > 0 ? (weightProperty.intValue / (float)totalWeight) * 100f : 0f;
+                        EditorGUILayout.LabelField($"{percentage:F1}%", GUILayout.Width(50));
+                    }
+                    
+                    GUILayout.FlexibleSpace();
+                }
+            }
+            
+            EditorGUILayout.EndVertical();
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup();
+
 
         GUILayout.Space(10);
 
@@ -356,6 +443,9 @@ public class ItemAttributeEditor : Editor
                 
                 if (itemProperty.FindPropertyRelative("fireTriggerDirection") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("fireTriggerDirection"), new GUIContent("方向"));
+
+                SerializedProperty dropWeightProperty = attributeProperty.FindPropertyRelative("dropWeight");
+                EditorGUILayout.PropertyField(dropWeightProperty, new GUIContent("掉落权重"));
             }
             else
             {
@@ -428,6 +518,9 @@ public class ItemAttributeEditor : Editor
                 
                 if (itemProperty.FindPropertyRelative("timeTriggerDirection") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("timeTriggerDirection"), new GUIContent("方向"));
+                    
+                SerializedProperty dropWeightProperty = attributeProperty.FindPropertyRelative("dropWeight");
+                EditorGUILayout.PropertyField(dropWeightProperty, new GUIContent("掉落权重"));
             }
             else
             {
@@ -495,11 +588,15 @@ public class ItemAttributeEditor : Editor
                 SerializedProperty descriptionProperty = attributeProperty.FindPropertyRelative("description");
                 EditorGUILayout.PropertyField(descriptionProperty, new GUIContent("描述"));
 
+
                 if (itemProperty.FindPropertyRelative("byOtherTriggerShape") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("byOtherTriggerShape"), new GUIContent("形状"));
                 
                 if (itemProperty.FindPropertyRelative("byOtherTriggerDirection") != null)
                     EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("byOtherTriggerDirection"), new GUIContent("方向"));
+
+                SerializedProperty dropWeightProperty = attributeProperty.FindPropertyRelative("dropWeight");
+                EditorGUILayout.PropertyField(dropWeightProperty, new GUIContent("掉落权重"));
             }
             else
             {
@@ -566,6 +663,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
+                EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
             }
             else
             {
@@ -625,6 +723,7 @@ public class ItemAttributeEditor : Editor
 
                 // 显示食物基本属性
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("specificFoodType"), new GUIContent("食物类型"));
+                EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("destroyCount"), new GUIContent(""));
 
                 // 显示食物效果列表
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("foodItemAttributes"), new GUIContent("食物效果"), true);
@@ -632,8 +731,9 @@ public class ItemAttributeEditor : Editor
                 // 显示形状和方向
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
-                
+
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
+                EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
             }
             else
             {
@@ -701,6 +801,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
+                EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
             }
             else
             {
@@ -761,6 +862,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemShape"), new GUIContent("形状"));
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
+                EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
             }
             else
             {
@@ -1059,6 +1161,19 @@ public class ItemAttributeEditor : Editor
         }
 
         return -1;
+    }
+
+    /// <summary>
+    /// 计算所有物品类型的总权重
+    /// </summary>
+    private int GetTotalWeight()
+    {
+        int total = 0;
+        for (int i = 0; i < typeDropWeightsProperty.arraySize; i++)
+        {
+            total += typeDropWeightsProperty.GetArrayElementAtIndex(i).intValue;
+        }
+        return total;
     }
 
     /// <summary>

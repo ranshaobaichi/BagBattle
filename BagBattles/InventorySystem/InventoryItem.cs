@@ -179,6 +179,11 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
                                 if (ItemAttribute.Instance.GetAttribute(Item.ItemType.TriggerItem, triggertype, timeTriggerType) is Trigger.TimeTriggerAttribute timeAttr)
                                     TooltipManager.Instance.ShowTimeTriggerTooltip(timeAttr);
                                 break;
+                            case Trigger.TriggerType.ByOtherTrigger:
+                                var byOtherTriggerType = (ByOtherTriggerType)GetSpecificType();
+                                if (ItemAttribute.Instance.GetAttribute(Item.ItemType.TriggerItem, triggertype, byOtherTriggerType) is Trigger.ByOtherTriggerAttribute byOtherAttr)
+                                    TooltipManager.Instance.ShowByOtherTriggerTooltip(byOtherAttr);
+                                break;
                         }
                     }
                     break;
