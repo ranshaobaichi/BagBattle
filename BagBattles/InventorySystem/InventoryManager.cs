@@ -59,7 +59,7 @@ public class InventoryManagerData
 public class InventoryManager : MonoBehaviour
 {
     const string inventorySaveDataPath = "inventoryData.json";
-    const string inventoryInitDataPath = "inventoryInitData.json";
+    const string inventoryInitDataPath = "inventoryInitData";
     public static InventoryManager Instance { get; set; }
     [Serializable]
     public struct GridPos
@@ -862,21 +862,24 @@ public class InventoryManager : MonoBehaviour
         surroundInInventory = new();
         otherInInventory = new();
 
-        string filePath;
+        string json = null;
         if (PlayerPrefs.GetInt(PlayerPrefsKeys.NEW_GAME_KEY) == 1)
-            filePath = Path.Combine(Application.persistentDataPath, inventoryInitDataPath);
-        else
-            filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
-        
-        // filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
-        Debug.Log($"尝试加载背包数据: {filePath}");
-        if (!File.Exists(filePath))
         {
-            Debug.Log("没有找到背包数据文件");
+            json = Resources.Load<TextAsset>(inventoryInitDataPath).text;
+            Debug.Log($"从Resources加载背包数据: {inventoryInitDataPath}");
+        }
+        else
+        {
+            string filePath = Path.Combine(Application.persistentDataPath, inventorySaveDataPath);
+            json = File.ReadAllText(filePath);
+            Debug.Log($"从{filePath}加载背包数据");
+        }
+        if (json == null)
+        {
+            Debug.LogError("背包数据加载失败，数据为空或文件不存在。请检查路径和文件名。");
             return;
         }
         
-        string json = File.ReadAllText(filePath);
         InventoryManagerData data = JsonUtility.FromJson<InventoryManagerData>(json);
         // 加载网格
         InitializeGrid(); 
@@ -967,6 +970,6 @@ public class InventoryManager : MonoBehaviour
         }
         // 触发器检测
         TriggerTriggerItem();
-        Debug.Log($"背包数据已加载: {filePath}");
+        Debug.Log($"背包数据已加载");
     }
 }

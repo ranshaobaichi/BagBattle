@@ -17,7 +17,8 @@ public class FoodItem : Item
         }
     }
     public override object GetSpecificItemType() => foodItemAttributes.specificFoodType;
-    public override void UseItem()
+    public override float GetTriggerInterval() => foodItemAttributes.triggerInterval;
+    protected override void UseItem()
     {
         Debug.Log("食物道具使用");
         foreach (var foodItemAttribute in foodItemAttributes.foodItemAttributes)

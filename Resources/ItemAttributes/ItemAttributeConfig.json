@@ -4,23 +4,23 @@
             {
                 "fireCountTriggerAttribute": {
                     "triggerRange": 2,
-                    "description": "",
-                    "dropWeight": 0,
-                    "fireCount": 1,
+                    "description": "每开火2次触发",
+                    "dropWeight": 2,
+                    "fireCount": 2,
                     "fireTriggerType": 0
                 },
-                "fireTriggerShape": 2,
+                "fireTriggerShape": 1,
                 "fireTriggerDirection": 1
             },
             {
                 "fireCountTriggerAttribute": {
                     "triggerRange": 1,
-                    "description": "测试用触发器",
-                    "dropWeight": 0,
+                    "description": "每开火1次触发",
+                    "dropWeight": 2,
                     "fireCount": 1,
                     "fireTriggerType": 1
                 },
-                "fireTriggerShape": 4,
+                "fireTriggerShape": 1,
                 "fireTriggerDirection": 1
             }
         ],
@@ -28,9 +28,9 @@
             {
                 "timeTriggerAttribute": {
                     "triggerRange": 2,
-                    "description": "这是你的基础触发器",
-                    "dropWeight": 0,
-                    "triggerTime": 3.0,
+                    "description": "每1秒触发",
+                    "dropWeight": 2,
+                    "triggerTime": 1.0,
                     "timeTriggerType": 0
                 },
                 "timeTriggerShape": 1,
@@ -38,11 +38,55 @@
             },
             {
                 "timeTriggerAttribute": {
-                    "triggerRange": 1,
-                    "description": "测试用触发器",
-                    "dropWeight": 0,
-                    "triggerTime": 0.5,
+                    "triggerRange": 3,
+                    "description": "每1秒触发",
+                    "dropWeight": 1,
+                    "triggerTime": 1.0,
                     "timeTriggerType": 1
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            },
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 4,
+                    "description": "每2秒触发",
+                    "dropWeight": 1,
+                    "triggerTime": 2.0,
+                    "timeTriggerType": 2
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            },
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 1,
+                    "description": "每0.5秒触发",
+                    "dropWeight": 2,
+                    "triggerTime": 0.5,
+                    "timeTriggerType": 3
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            },
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 5,
+                    "description": "每1.5秒触发",
+                    "dropWeight": 2,
+                    "triggerTime": 1.5,
+                    "timeTriggerType": 4
+                },
+                "timeTriggerShape": 1,
+                "timeTriggerDirection": 1
+            },
+            {
+                "timeTriggerAttribute": {
+                    "triggerRange": 7,
+                    "description": "每2秒触发",
+                    "dropWeight": 1,
+                    "triggerTime": 2.0,
+                    "timeTriggerType": 5
                 },
                 "timeTriggerShape": 1,
                 "timeTriggerDirection": 1
@@ -51,11 +95,33 @@
         "byOtherTriggerAttributes": [
             {
                 "byOtherTriggerAttribute": {
-                    "triggerRange": 1,
-                    "description": "测试",
-                    "dropWeight": 0,
-                    "requiredTriggerCount": 3,
+                    "triggerRange": 2,
+                    "description": "被其余装置触发",
+                    "dropWeight": 2,
+                    "requiredTriggerCount": 1,
                     "byOtherTriggerType": 0
+                },
+                "byOtherTriggerShape": 1,
+                "byOtherTriggerDirection": 1
+            },
+            {
+                "byOtherTriggerAttribute": {
+                    "triggerRange": 3,
+                    "description": "被其余装置触发",
+                    "dropWeight": 1,
+                    "requiredTriggerCount": 1,
+                    "byOtherTriggerType": 1
+                },
+                "byOtherTriggerShape": 1,
+                "byOtherTriggerDirection": 1
+            },
+            {
+                "byOtherTriggerAttribute": {
+                    "triggerRange": 6,
+                    "description": "被其余装置触发",
+                    "dropWeight": 2,
+                    "requiredTriggerCount": 2,
+                    "byOtherTriggerType": 2
                 },
                 "byOtherTriggerShape": 1,
                 "byOtherTriggerDirection": 1
@@ -71,8 +137,9 @@
                     "specificBulletType": 0,
                     "bulletType": 1,
                     "description": "这是一发普通子弹",
-                    "bulletCount": 1,
-                    "dropWeight": 0
+                    "bulletCount": 2,
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
                 }
             }
         ]
@@ -85,16 +152,593 @@
                 "foodItemAttribute": {
                     "specificFoodType": 0,
                     "destroyCount": 1,
-                    "description": "加速加速，测试用",
+                    "description": "本波次，伤害与攻速+55%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 5,
+                            "foodBonusValue": 55.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 1.0
+                        },
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 55.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 1.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 1,
+                    "destroyCount": 1,
+                    "description": "2波次内，血量上限-4，子弹基础伤害+16",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 1,
+                            "foodBonusValue": 16.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 2.0
+                        },
+                        {
+                            "foodBonusType": 7,
+                            "foodBonusValue": -4.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 2,
+                    "destroyCount": 1,
+                    "description": "3波次内，伤害、攻速、移速+25%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 25.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 25.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": 25.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 3,
+                    "destroyCount": 1,
+                    "description": "血格上限+1",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 7,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 4,
+                    "destroyCount": 1,
+                    "description": "3波次内，每波次结束时，恢复1格血",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 8,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 5,
+                    "destroyCount": 1,
+                    "description": "护甲+2，移速-10%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 10,
+                            "foodBonusValue": 2.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": -10.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 6,
+                    "destroyCount": 1,
+                    "description": "3波次内，血量上限-1，伤害+40%，移速+15%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 9,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 40.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": 15.0,
+                            "foodDurationType": 2,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 7,
+                    "destroyCount": 1,
+                    "description": "移速-55%，伤害与攻速+55%",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 6,
-                            "foodBonusValue": 99.0,
-                            "foodDurationType": 3,
-                            "timeLeft": 5.0
+                            "foodBonusValue": -55.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
+                        },
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 50.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
+                        },
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 50.0,
+                            "foodDurationType": 1,
+                            "timeLeft": 100.0
                         }
                     ],
-                    "dropWeight": 0
+                    "dropWeight": 1,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 8,
+                    "destroyCount": -1,
+                    "description": "",
+                    "foodItemAttributes": [],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 9,
+                    "destroyCount": -1,
+                    "description": "2秒内，子弹基础伤害+2",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 1,
+                            "foodBonusValue": 2.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 10,
+                    "destroyCount": -1,
+                    "description": "2.5秒内，子弹基础伤害+1，可以叠加。",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 1,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.5
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 2,
+                "itemDirection": 2,
+                "foodItemAttribute": {
+                    "specificFoodType": 11,
+                    "destroyCount": -1,
+                    "description": "2秒内，伤害+15%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 15.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 2,
+                "itemDirection": 2,
+                "foodItemAttribute": {
+                    "specificFoodType": 12,
+                    "destroyCount": -1,
+                    "description": "弹夹内，随机3颗子弹基础伤害+2",
+                    "foodItemAttributes": [],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 13,
+                    "destroyCount": -1,
+                    "description": "2.5秒内，攻速-4%，伤害+10%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 10.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.5
+                        },
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": -4.0,
+                            "foodDurationType": 0,
+                            "timeLeft": 2.5
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 14,
+                    "destroyCount": -1,
+                    "description": "3秒内，移速-3%，子弹基础伤害+3，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 1,
+                            "foodBonusValue": 3.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": -3.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 15,
+                    "destroyCount": -1,
+                    "description": "每30秒，血量-1，伤害+45%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 45.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 30.0
+                        },
+                        {
+                            "foodBonusType": 9,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 30.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 2,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 16,
+                    "destroyCount": -1,
+                    "description": "2秒内，伤害、攻速、移速+4%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 2,
+                            "foodBonusValue": 5.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        },
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 5.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": 5.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 17,
+                    "destroyCount": -1,
+                    "description": "每25秒，恢复1格血",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 8,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 25.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 18,
+                    "destroyCount": -1,
+                    "description": "每40秒，护甲+1",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 10,
+                            "foodBonusValue": 1.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 40.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 19,
+                    "destroyCount": -1,
+                    "description": "3秒内，攻速+10%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 10.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 2,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 20,
+                    "destroyCount": -1,
+                    "description": "2秒内，攻速+16%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 3,
+                            "foodBonusValue": 16.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 21,
+                    "destroyCount": -1,
+                    "description": "2秒内，移速-3%，攻速+18%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 4,
+                            "foodBonusValue": 18.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        },
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": -3.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 2.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 22,
+                    "destroyCount": -1,
+                    "description": "3秒内，移速+6%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": 6.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 23,
+                    "destroyCount": -1,
+                    "description": "1秒内，移速+45%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 6,
+                            "foodBonusValue": 70.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 0.4000000059604645
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 24,
+                    "destroyCount": -1,
+                    "description": "1秒内，攻击范围+25%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 3,
+                            "foodBonusValue": 25.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 1.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 25,
+                    "destroyCount": -1,
+                    "description": "3秒内，攻击范围+6%，可以叠加",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 3,
+                            "foodBonusValue": 6.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "foodItemAttribute": {
+                    "specificFoodType": 26,
+                    "destroyCount": -1,
+                    "description": "3秒内，触发器冷却时间+3%，攻击范围+5%",
+                    "foodItemAttributes": [
+                        {
+                            "foodBonusType": 3,
+                            "foodBonusValue": 5.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        },
+                        {
+                            "foodBonusType": 5,
+                            "foodBonusValue": -3.0,
+                            "foodDurationType": 3,
+                            "timeLeft": 3.0
+                        }
+                    ],
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
                 }
             }
         ]
@@ -114,7 +758,8 @@
                     "dropWeight": 0,
                     "surroundingPrefab": {
                         "instanceID": 0
-                    }
+                    },
+                    "triggerInterval": 0.0
                 }
             },
             {
@@ -130,7 +775,8 @@
                     "dropWeight": 0,
                     "surroundingPrefab": {
                         "instanceID": 0
-                    }
+                    },
+                    "triggerInterval": 0.0
                 }
             }
         ]
@@ -146,7 +792,8 @@
                     "otherItemPrefab": {
                         "instanceID": 0
                     },
-                    "dropWeight": 0
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
                 }
             },
             {
@@ -158,7 +805,8 @@
                     "otherItemPrefab": {
                         "instanceID": 0
                     },
-                    "dropWeight": 0
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
                 }
             },
             {
@@ -170,7 +818,21 @@
                     "otherItemPrefab": {
                         "instanceID": 0
                     },
-                    "dropWeight": 0
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
+                }
+            },
+            {
+                "itemShape": 1,
+                "itemDirection": 1,
+                "otherItemAttribute": {
+                    "description": "",
+                    "specificOtherType": 3,
+                    "otherItemPrefab": {
+                        "instanceID": 0
+                    },
+                    "dropWeight": 0,
+                    "triggerInterval": 0.0
                 }
             }
         ]

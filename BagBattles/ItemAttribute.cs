@@ -12,7 +12,8 @@ public struct BulletItemAttribute
     [Header("装载子弹类型")] public Bullet.SingleBulletType bulletType;
     [Header("道具描述")] public string description;
     [Header("子弹装载数量")] public int bulletCount;
-    [Header("掉落权重")] [Range(0, 9)] public int dropWeight;
+    [Header("掉落权重")][Range(0, 9)] public int dropWeight;
+    [Header("触发间隔时间(-1即为无限制)")] public float triggerInterval;
 }
 [Serializable]
 public struct FoodItemAttribute
@@ -29,7 +30,8 @@ public struct FoodItemAttribute
     [Header("食物触发几次后销毁(-1即为不销毁)")] public int destroyCount;
     [Header("道具描述")] public string description;
     [Header("食物效果配置")] public List<BasicFoodAttribute> foodItemAttributes;
-    [Header("掉落权重")] [Range(0, 9)] public int dropWeight;
+    [Header("掉落权重")][Range(0, 9)] public int dropWeight;
+    [Header("触发间隔时间(-1即为无限制)")] public float triggerInterval;
 }
 
 [Serializable]
@@ -42,8 +44,9 @@ public struct SurroundItemAttribute
     [Tooltip("一次产生的环绕物数量")] public int surroundingCount;
     [Tooltip("环绕物加速持续时间")] public float surroundingDuration;
     [Tooltip("再次触发时的加速百分比")] public float surroundingSpeedPercent;
-    [Header("掉落权重")] [Range(0, 9)] public int dropWeight;
+    [Header("掉落权重")][Range(0, 9)] public int dropWeight;
     [HideInInspector] public GameObject surroundingPrefab;
+    [Header("触发间隔时间(-1即为无限制)")] public float triggerInterval;
 }
 
 [Serializable]
@@ -53,6 +56,7 @@ public struct OtherItemAttribute
     [Header("其他物品类型")][Assets.Editor.ItemAttributeDrawer.ReadOnly] public OtherType specificOtherType;
     [HideInInspector] public GameObject otherItemPrefab;
     [Header("掉落权重")] [Range(0, 9)] public int dropWeight;
+    [Header("触发间隔时间(-1即为无限制)")] public float triggerInterval;
 }
 #endregion
 

@@ -19,8 +19,9 @@ public class BulletItem : Item
         }
     }
     public override object GetSpecificItemType() => bulletAttribute.specificBulletType;
-    
-    public override void UseItem()
+    public override float GetTriggerInterval() => bulletAttribute.triggerInterval;
+
+    protected override void UseItem()
     {
         // Debug.Log("子弹道具使用");
         BulletSpawner.Instance.LoadBullet(bulletAttribute.bulletType, bulletAttribute.bulletCount);

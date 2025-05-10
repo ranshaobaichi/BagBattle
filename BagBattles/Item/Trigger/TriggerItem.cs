@@ -120,7 +120,8 @@ public abstract class TriggerItem : MonoBehaviour
                     Debug.LogError("触发器触发的物品为空");
                     continue;
                 }
-                item.UseItem();
+                item.Use();
+                StartCoroutine(item.TriggerTimer());
             }
             if (itemList.Key == Item.ItemType.FoodItem)
             {
@@ -164,7 +165,7 @@ public abstract class TriggerItem : MonoBehaviour
         items.Clear();
         Debug.Log("触发器销毁");
     }
-    // public override void UseItem()
+    // protected override void UseItem()
     // {
     //     // 触发器的使用逻辑
     //     StartTrigger();

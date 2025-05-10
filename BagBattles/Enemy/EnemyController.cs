@@ -153,7 +153,10 @@ public class EnemyController : MonoBehaviour
     }
 
     // 敌人死亡时调用接口
-    public virtual void OnDead() { }
+    public virtual void OnDead()
+    {
+        StatisticsScript.Instance.AddTotalEnemiesKilled();
+    }
     
     // 敌人被击中时调用接口
     public virtual bool TakeDamage(float damage)
@@ -163,7 +166,11 @@ public class EnemyController : MonoBehaviour
         if (invincible_flag == false && live)
         {
             Debug.Log("enemy take damage: " + damage);
-            currentHP -= damage;
+
+            // 计算实际伤害
+            float actual_damage = CalculateActualDamage(damage);
+            currentHP -= actual_damage;
+            StatisticsScript.Instance.AddTotalDamageCaused(actual_damage);
 
             // 设置无敌状态
             if (invincible_time > 0)
@@ -194,20 +201,25 @@ public class EnemyController : MonoBehaviour
         return false;
     }
 
+    protected virtual float CalculateActualDamage(float damage)
+    {
+        return Mathf.Clamp(damage, 0, currentHP);
+    }
+
     protected IEnumerator FlashEffect()
-    {        
-        isFlashing = true;        
+    {
+        isFlashing = true;
         for (int i = 0; i < hurtFlashCount; i++)
         {
             // 闪烁到透明状态
             spriteRenderer.color = flashColor;
             yield return new WaitForSeconds(hurtFlashSpeed);
-            
+
             // 恢复原始颜色
             spriteRenderer.color = originalColor;
             yield return new WaitForSeconds(hurtFlashSpeed);
         }
-        
+
         // 确保最后恢复原始颜色
         spriteRenderer.color = originalColor;
         isFlashing = false;

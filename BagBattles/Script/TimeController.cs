@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.SceneManagement;
 public class TimeController : MonoBehaviour
 {
     public static TimeController Instance;
@@ -61,7 +62,14 @@ public class TimeController : MonoBehaviour
     {
         timeUP = true;
         PlayerController.Instance.FinishRound();
-        StartCoroutine(ChooseUI());
+        if (MapCellManager.Instance.IsPlayerReachedTargetCell())
+        {
+            SceneManager.LoadScene("SuccessScene");
+        }
+        else
+        {
+            StartCoroutine(ChooseUI());
+        }
     }
     private IEnumerator ChooseUI()
     {

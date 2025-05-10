@@ -20,7 +20,8 @@ public class OtherItem : Item
         }
     }
     public override object GetSpecificItemType() => otherAttribute.specificOtherType;
-    public override void UseItem()
+    public override float GetTriggerInterval() => otherAttribute.triggerInterval;
+    protected override void UseItem()
     {
         switch (otherAttribute.specificOtherType)
         {

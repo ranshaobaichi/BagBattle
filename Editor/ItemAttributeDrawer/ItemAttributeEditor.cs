@@ -664,6 +664,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
                 EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
+                EditorGUILayout.PropertyField(bulletItemAttributeProperty.FindPropertyRelative("triggerInterval"), new GUIContent("触发间隔"));
             }
             else
             {
@@ -734,6 +735,7 @@ public class ItemAttributeEditor : Editor
 
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
                 EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
+                EditorGUILayout.PropertyField(foodItemAttributeProperty.FindPropertyRelative("triggerInterval"), new GUIContent("触发间隔"));
             }
             else
             {
@@ -802,6 +804,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
                 EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
+                EditorGUILayout.PropertyField(surroundItemAttributeProperty.FindPropertyRelative("triggerInterval"), new GUIContent("触发间隔"));
             }
             else
             {
@@ -863,6 +866,7 @@ public class ItemAttributeEditor : Editor
                 EditorGUILayout.PropertyField(itemProperty.FindPropertyRelative("itemDirection"), new GUIContent("方向"));
                 EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("description"), new GUIContent("描述"));
                 EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("dropWeight"), new GUIContent("掉落权值"));
+                EditorGUILayout.PropertyField(otherItemAttributeProperty.FindPropertyRelative("triggerInterval"), new GUIContent("触发间隔"));
             }
             else
             {

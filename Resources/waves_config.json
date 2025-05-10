@@ -53,6 +53,24 @@
             "startTime": 0,
             "holdTime": 30.0,
             "enemies": []
+        },
+        {
+            "waveId": 6,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
+        },
+        {
+            "waveId": 7,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
+        },
+        {
+            "waveId": 8,
+            "startTime": 0,
+            "holdTime": 30.0,
+            "enemies": []
         }
     ]
 }

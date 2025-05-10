@@ -32,7 +32,11 @@ public class DivisionParentEnemy : EnemyController
         if (invincible_flag == false && live)
         {
             Debug.Log("enemy take damage: " + damage);
-            currentHP -= damage;
+            // 计算实际伤害
+            float actualDamage = CalculateActualDamage(damage);
+            // 扣除血量
+            currentHP -= actualDamage;
+            StatisticsScript.Instance.AddTotalDamageCaused(actualDamage);
             
             // 设置无敌状态
             if (invincible_time > 0)

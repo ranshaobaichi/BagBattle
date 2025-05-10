@@ -22,7 +22,8 @@ public class SurroundItem : Item
         surrounding = null;
     }
     public override object GetSpecificItemType() => surroundAttribute.specificSurroundType;
-    public override void UseItem()
+    public override float GetTriggerInterval() => surroundAttribute.triggerInterval;
+    protected override void UseItem()
     {
         if (surrounding == null)
         {

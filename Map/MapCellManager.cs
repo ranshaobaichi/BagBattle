@@ -26,7 +26,7 @@ public class MapCellManager : MonoBehaviour
     public MapCell[,] mapCells; // 地图格子数组
 
     #region 初始位置及目标位置
-    public const int walkLength = 2;
+    public const int walkLength = 3;
     private int playerPosX; // 玩家当前行
     private int playerPosY; // 玩家当前列
 
@@ -68,6 +68,8 @@ public class MapCellManager : MonoBehaviour
     {
         UpdateInteractableCells();
     }
+
+    public bool IsPlayerReachedTargetCell() => (playerPosX, playerPosY) == (targetPosX, targetPosY); // 检查玩家是否到达目标格子
 
     public void InitializeMapCells()
     {

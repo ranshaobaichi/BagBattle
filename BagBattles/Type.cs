@@ -7,6 +7,8 @@ namespace Assets.BagBattles.Types
     [Serializable]
     public enum FireTriggerType
     {
+        反应强化连接I,
+        反应强化连接II,
         Type1,
         Type2,
         Type3,
@@ -17,16 +19,21 @@ namespace Assets.BagBattles.Types
     // 时间触发器具体类型
     public enum TimeTriggerType
     {
+        标准压入装置I,
+        标准压入装置II,
+        强力压入装置I,
+        快速压入装置I,
+        起爆装置,
+        强效引爆装置,
         Type1,
-        Type2,
-        Type3,
-        Type4,
-        Type5,
     }
 
     // 其他触发器具体类型
     public enum ByOtherTriggerType
     {
+        延伸触发装置I,
+        延伸触发装置II,
+        连锁触发装置,
         Type1,
         Type2,
         Type3,
@@ -39,16 +46,45 @@ namespace Assets.BagBattles.Types
     [Serializable]
     public enum FoodType
     {
+        小麦,
+        奇怪海洋触须,
+        应急口粮,
+        温热稠液,
+        食尸鬼的礼物,
+        蠕动幼崽肉,
+        腐臭的鲜肉,
+        水银饮剂,
         Type1,
+        锻铁,
+        液态金属,
+        陨铁,
+        绯色晶体,
+        火药袋,
+        重型弹药,
+        献祭匕首,
+        头骨挂坠,
+        旧的假的甜甜圈,
+        回火的军用水壶,
+        战斗手套,
+        快速枪口,
+        弹鼓,
+        强化血清,
+        急促时间加速器,
+        红外线,
+        伸缩枪口,
+        瞄准镜,
+        树脂,
+        箭毒蛙提取液,
+        干冰,
+        血肉冰冻术残页,
+        爆裂附魔术残页,
+        冰冻附魔术残页,
+        赤阳稳固术残页,
+        两级稳固术残页,
+        金属强化器,
+        额外撞针,
         Type2,
         Type3,
-        Type4,
-        Type5,
-        Type6,
-        Type7,
-        Type8,
-        Type9,
-        Type10,
     }
     #endregion
 
@@ -56,7 +92,7 @@ namespace Assets.BagBattles.Types
     public enum BulletType
     {
         // 后面带Single的都是单发子弹类型
-        Normal_Bullet_Single,
+        标准子弹,
         Spear_Bullet_Single,
         Rocket_Bullet_Single,
         Lightning_Bullet_Single,

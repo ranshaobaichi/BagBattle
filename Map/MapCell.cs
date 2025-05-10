@@ -100,5 +100,6 @@ public class MapCell : MonoBehaviour
         BulletSpawner.Instance.StoreBulletData();
         HealthController.Instance.StoreHealthData();
         MapCellManager.Instance.StoreMapCellData();
+        StatisticsScript.Instance.StoreStatisticsData();
     }
 }

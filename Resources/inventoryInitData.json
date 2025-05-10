@@ -1,0 +1,52 @@
+{
+    "rows": 5,
+    "cols": 5,
+    "triggers": [
+        {
+            "guid": "a0e42672-268e-46c2-b4ac-66f5969e8f75",
+            "blankPos": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "position": [
+                {
+                    "gridX": 0,
+                    "gridY": 4
+                }
+            ],
+            "functionType": 0,
+            "specificType": 0
+        }
+    ],
+    "foods": [],
+    "bullets": [
+        {
+            "guid": "47af99a8-f872-4054-8781-0761e735e392",
+            "blankPos": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "position": [
+                {
+                    "gridX": 0,
+                    "gridY": 3
+                }
+            ],
+            "bulletType": 0
+        },
+        {
+            "guid": "681e337d-6ef2-4f4d-9e1f-330abc347a53",
+            "blankPos": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "position": [
+                {
+                    "gridX": 0,
+                    "gridY": 2
+                }
+            ],
+            "bulletType": 0
+        }
+    ]
+}
