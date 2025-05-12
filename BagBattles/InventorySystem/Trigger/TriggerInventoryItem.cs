@@ -18,7 +18,23 @@ public abstract class TriggerInventoryItem : InventoryItem
     public Trigger.TriggerRange GetTriggerRange() => triggerRange;
     #endregion
 
-    public TriggerInventoryItem() => itemType = Item.ItemType.TriggerItem;
+    public TriggerInventoryItem()
+    {
+        itemType = Item.ItemType.TriggerItem;
+        SetIcon();
+    }
+
+    protected override void SetIcon()
+    {
+        ItemIcon.Instance.TryGetIcon(triggerType, (Enum)GetSpecificType(), true, out itemIcon);
+        if (itemIcon != null)
+            base.SetIcon();
+        else
+        {
+            Debug.LogError($"触发器道具{triggerType}:{(int)GetSpecificType()}图标设置错误");
+        }
+    }
+
     private bool HasSpace(InventoryManager.GridPos gridPos, Direction direction)
     {
         int gridHeight = InventoryManager.Instance.GetGridHeight();

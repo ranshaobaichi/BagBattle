@@ -177,6 +177,7 @@ public class InventoryManager : MonoBehaviour
                             Destroy(ret);
                             return null;
                         }
+
                         // 将生成物体加入管理列表中
                         triggerInInventory.Add(fireInventoryTriggerItem);
                     }

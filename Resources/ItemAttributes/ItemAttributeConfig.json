@@ -168,7 +168,7 @@
                         }
                     ],
                     "dropWeight": 1,
-                    "triggerInterval": 0.0
+                    "triggerInterval": -1.0
                 }
             },
             {
@@ -177,7 +177,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 1,
                     "destroyCount": 1,
-                    "description": "2波次内，血量上限-4，子弹基础伤害+16",
+                    "description": "它绝对不是章鱼……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 1,
@@ -202,7 +202,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 2,
                     "destroyCount": 1,
-                    "description": "3波次内，伤害、攻速、移速+25%",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 2,
@@ -233,7 +233,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 3,
                     "destroyCount": 1,
-                    "description": "血格上限+1",
+                    "description": "有点像蜗牛的粘液，触感像融化的橡胶……我为何会知道这是种食物？",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 7,
@@ -252,13 +252,13 @@
                 "foodItemAttribute": {
                     "specificFoodType": 4,
                     "destroyCount": 1,
-                    "description": "3波次内，每波次结束时，恢复1格血",
+                    "description": "这些佝偻的类人生物似乎可以交流，他们给予的礼物……好香…… ",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 8,
-                            "foodBonusValue": 1.0,
+                            "foodBonusValue": 4.0,
                             "foodDurationType": 2,
-                            "timeLeft": 3.0
+                            "timeLeft": 1.0
                         }
                     ],
                     "dropWeight": 1,
@@ -271,7 +271,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 5,
                     "destroyCount": 1,
-                    "description": "护甲+2，移速-10%",
+                    "description": "通体漆黑，纹理看上去像羊肉……好硬",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 10,
@@ -296,7 +296,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 6,
                     "destroyCount": 1,
-                    "description": "3波次内，血量上限-1，伤害+40%，移速+15%",
+                    "description": "明明新鲜到血液还未凝固，但却散发出腐肉的臭味",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 9,
@@ -327,7 +327,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 7,
                     "destroyCount": 1,
-                    "description": "移速-55%，伤害与攻速+55%",
+                    "description": "酒瓶中，闪着诱人金黄色的液体。它不仅辛辣，更使我感到十分疲倦……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 6,
@@ -370,7 +370,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 9,
                     "destroyCount": -1,
-                    "description": "2秒内，子弹基础伤害+2",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 1,
@@ -389,7 +389,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 10,
                     "destroyCount": -1,
-                    "description": "2.5秒内，子弹基础伤害+1，可以叠加。",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 1,
@@ -408,7 +408,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 11,
                     "destroyCount": -1,
-                    "description": "2秒内，伤害+15%",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 2,
@@ -427,7 +427,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 12,
                     "destroyCount": -1,
-                    "description": "弹夹内，随机3颗子弹基础伤害+2",
+                    "description": "",
                     "foodItemAttributes": [],
                     "dropWeight": 0,
                     "triggerInterval": 0.0
@@ -439,7 +439,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 13,
                     "destroyCount": -1,
-                    "description": "2.5秒内，攻速-4%，伤害+10%，可以叠加",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 2,
@@ -464,7 +464,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 14,
                     "destroyCount": -1,
-                    "description": "3秒内，移速-3%，子弹基础伤害+3，可以叠加",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 1,
@@ -489,7 +489,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 15,
                     "destroyCount": -1,
-                    "description": "每30秒，血量-1，伤害+45%",
+                    "description": "它似乎在看我？",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 2,
@@ -514,7 +514,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 16,
                     "destroyCount": -1,
-                    "description": "2秒内，伤害、攻速、移速+4%，可以叠加",
+                    "description": "某种从未见过的鸟类颅骨，但没有眼窝，鸟喙里藏着宛如漩涡排列的尖牙……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 2,
@@ -545,7 +545,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 17,
                     "destroyCount": -1,
-                    "description": "每25秒，恢复1格血",
+                    "description": "原来邪教徒们也喜欢甜甜圈？",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 8,
@@ -564,7 +564,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 18,
                     "destroyCount": -1,
-                    "description": "每40秒，护甲+1",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 10,
@@ -583,7 +583,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 19,
                     "destroyCount": -1,
-                    "description": "3秒内，攻速+10%，可以叠加",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 4,
@@ -602,7 +602,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 20,
                     "destroyCount": -1,
-                    "description": "2秒内，攻速+16%，可以叠加",
+                    "description": "三连发，但我明明只装填了两发子弹……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 3,
@@ -621,7 +621,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 21,
                     "destroyCount": -1,
-                    "description": "2秒内，移速-3%，攻速+18%，可以叠加",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 4,
@@ -646,7 +646,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 22,
                     "destroyCount": -1,
-                    "description": "3秒内，移速+6%，可以叠加",
+                    "description": "眼珠代替指针，它总是盯着南方，偶尔也喜欢对视……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 6,
@@ -665,7 +665,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 23,
                     "destroyCount": -1,
-                    "description": "1秒内，移速+45%",
+                    "description": "自从踏足这里后，我的物品似乎在逐渐苏醒",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 6,
@@ -684,7 +684,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 24,
                     "destroyCount": -1,
-                    "description": "1秒内，攻击范围+25%",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 3,
@@ -703,7 +703,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 25,
                     "destroyCount": -1,
-                    "description": "3秒内，攻击范围+6%，可以叠加",
+                    "description": "越长愈怪……",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 3,
@@ -722,7 +722,7 @@
                 "foodItemAttribute": {
                     "specificFoodType": 26,
                     "destroyCount": -1,
-                    "description": "3秒内，触发器冷却时间+3%，攻击范围+5%",
+                    "description": "",
                     "foodItemAttributes": [
                         {
                             "foodBonusType": 3,
@@ -731,7 +731,7 @@
                             "timeLeft": 3.0
                         },
                         {
-                            "foodBonusType": 5,
+                            "foodBonusType": 4,
                             "foodBonusValue": -3.0,
                             "foodDurationType": 3,
                             "timeLeft": 3.0

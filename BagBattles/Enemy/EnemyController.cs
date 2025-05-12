@@ -52,6 +52,7 @@ public class EnemyController : MonoBehaviour
     [Header("组件")]
     public Text health_text;
     public Rigidbody2D rb;
+    private object healthlock = new object();
 
     [Header("敌人图像")]
     [Tooltip("序列帧切换时间")] public float enemySpriteChangeTime = 0.1f;
@@ -77,7 +78,6 @@ public class EnemyController : MonoBehaviour
         ice_timer = 0.0f;
         fire_timer = 0.0f;
         invincible_timer = 0f;
-        invincible_time = 0.1f;
         ice_level = 0;
         currentHP = maxHP;
         current_speed += UnityEngine.Random.Range(-speed_gap, speed_gap);
@@ -161,16 +161,28 @@ public class EnemyController : MonoBehaviour
     // 敌人被击中时调用接口
     public virtual bool TakeDamage(float damage)
     {
-        if (live == false || isActiveAndEnabled == false || currentHP <= 0f)
-            return false;
         if (invincible_flag == false && live)
         {
-            Debug.Log("enemy take damage: " + damage);
+            // Debug.Log("enemy take damage: " + damage);
+            // 生成伤害数字
+            EnemyDamageNumberController.Instance.CreateDamageNumber(damage, transform.position + new Vector3(0, 1.5f, 0));
 
             // 计算实际伤害
             float actual_damage = CalculateActualDamage(damage);
-            currentHP -= actual_damage;
-            StatisticsScript.Instance.AddTotalDamageCaused(actual_damage);
+            lock (healthlock)
+            {
+                currentHP -= actual_damage;
+                // 死亡处理
+                if (currentHP <= 0f)
+                {
+                    live = false;
+                }
+            }
+            if (!live)
+            {
+                OnDead();
+                ObjectPool.Instance.PushObject(gameObject);
+            }
 
             // 设置无敌状态
             if (invincible_time > 0)
@@ -178,24 +190,12 @@ public class EnemyController : MonoBehaviour
                 invincible_flag = true;
                 invincible_timer = 0f;
             }
-
-            // 生成伤害数字
-            EnemyDamageNumberController.Instance.CreateDamageNumber(damage, transform.position + new Vector3(0, 1.5f, 0));
-
-            // 死亡处理
-            if (currentHP <= 0f)
-            {
-                OnDead();
-                live = false;
-                rb.velocity = Vector2.zero;
-                ObjectPool.Instance.PushObject(gameObject);
-            }
-            
             // 启动闪烁效果
             if (!isFlashing && live)
             {
                 StartCoroutine(FlashEffect());
             }
+            StatisticsScript.Instance.AddTotalDamageCaused(actual_damage);
             return true;
         }
         return false;

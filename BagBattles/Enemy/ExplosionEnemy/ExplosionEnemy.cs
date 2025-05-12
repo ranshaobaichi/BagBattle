@@ -15,6 +15,7 @@ public class ExplosionEnemy : EnemyController
     }
     public override void OnDead()
     {
+        base.OnDead();
         Explode();
     }
     private void Explode()

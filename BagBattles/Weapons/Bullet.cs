@@ -34,10 +34,6 @@ public class Bullet : MonoBehaviour
     new protected Rigidbody2D rigidbody;
     protected int current_pass_num;
 
-    // 添加碰撞目标列表
-    private List<EnemyController> collidedEnemies = new List<EnemyController>();
-    private bool processingCollisions = false;
-
     //FIXME:添加方便设置速度接口
     //fixme:添加局外更改伤害接口
     protected virtual void Awake()
@@ -57,41 +53,6 @@ public class Bullet : MonoBehaviour
             rigidbody.velocity = Vector2.zero;
             StopAllCoroutines();
         }
-
-        // 每帧结束时处理碰撞
-        if (collidedEnemies.Count > 0 && !processingCollisions)
-        {
-            StartCoroutine(ProcessCollisionsNextFrame());
-        }
-    }
-
-    // 用于延迟处理碰撞的协程
-    private IEnumerator ProcessCollisionsNextFrame()
-    {
-        processingCollisions = true;
-        yield return null; // 等待下一帧
-
-        // 处理所有收集到的碰撞
-        foreach (var enemy in collidedEnemies)
-        {
-            if (enemy != null && enemy.Live())
-            {
-                if (CauseDamage(enemy))
-                {
-                    current_pass_num--;
-                    if (current_pass_num < 0)
-                    {
-                        collidedEnemies.Clear();
-                        processingCollisions = false;
-                        Del();
-                        yield break; // 提前退出
-                    }
-                }
-            }
-        }
-
-        collidedEnemies.Clear();
-        processingCollisions = false;
     }
 
     public virtual void SetSpeed(Vector2 direction)
@@ -109,14 +70,18 @@ public class Bullet : MonoBehaviour
     //FIXME:多个子弹碰撞同一敌人时，敌人伤害计算慢（未直接死亡），导致多个子弹同时销毁
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("子弹碰撞: " + other.name);
-        if (other.CompareTag("Enemy") && other.GetComponent<EnemyController>().Live())
+        // Debug.Log("子弹碰撞: " + other.name);
+        if (other.CompareTag("Enemy"))
         {
             EnemyController enemy = other.GetComponent<EnemyController>();
-            // 只添加到列表中，不立即处理
-            if (!collidedEnemies.Contains(enemy))
+            if (enemy != null)
             {
-                collidedEnemies.Add(enemy);
+                current_pass_num--;
+                StartCoroutine(CauseDamage(enemy));
+                if (current_pass_num < 0)
+                {
+                    Del();
+                }
             }
         }
         else if (other.CompareTag("Wall"))
@@ -124,9 +89,10 @@ public class Bullet : MonoBehaviour
             Del();
         }
     }
-    protected bool CauseDamage(EnemyController enemy)
+    protected IEnumerator CauseDamage(EnemyController enemy)
     {
         float actual_damage = bulletBasicAttribute.damage;
-        return enemy.TakeDamage(actual_damage);
+        Debug.Log($"子弹造成伤害: {actual_damage}");
+        yield return enemy.TakeDamage(actual_damage);
     }
 }

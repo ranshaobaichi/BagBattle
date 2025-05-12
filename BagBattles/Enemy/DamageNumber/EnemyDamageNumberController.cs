@@ -26,13 +26,18 @@ public class EnemyDamageNumberController : MonoBehaviour
 
     public void CreateDamageNumber(float damage, Vector3 worldPosition)
     {
+        StartCoroutine(CreateNumberCoroutine(damage, worldPosition));
+    }
+
+    public IEnumerator CreateNumberCoroutine(float damage, Vector3 worldPosition)
+    {
         GameObject damageNumber = ObjectPool.Instance.GetObject(enemyDamageNumberPrefab);
         damageNumber.SetActive(true);
-        
+
         damageNumber.transform.SetParent(canvasTransform);
         damageNumber.transform.localScale = Vector3.one;
         damageNumber.transform.position = worldPosition;
-        
+
         // 设置文本值
         TextMeshProUGUI textComponent = damageNumber.GetComponentInChildren<TextMeshProUGUI>();
         if (textComponent != null)
@@ -47,5 +52,6 @@ public class EnemyDamageNumberController : MonoBehaviour
         {
             enemyDamageNumber.Initialize(damage, worldPosition);
         }
+        yield break;
     }
 }

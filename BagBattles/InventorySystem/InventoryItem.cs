@@ -59,7 +59,7 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
     protected string description;
     #endregion
 
-    #region 对外接口
+    #region 接口
     public Item.ItemType GetItemType() => itemType;
     public ItemShape GetShape() => itemShape;
     public Direction GetDirection() => itemDirection;
@@ -72,6 +72,15 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
     public abstract object GetSpecificType();
     public string GetDescription() => description; // 获取物品描述
     #endregion
+    protected virtual void SetIcon()
+    {
+        if (itemIcon == null && !ItemIcon.Instance.TryGetIcon(itemType, (Enum)GetSpecificType(), false, out itemIcon))
+        {
+            Debug.LogError($"道具{gameObject.name}图标设置错误！");
+            return;
+        }
+        transform.GetComponent<Image>().sprite = itemIcon;
+    }
 
     protected void InitializeDirection(Direction direction)
     {
@@ -134,6 +143,9 @@ public abstract class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHan
 
         // 可以被触发器检测标志
         triggerDectectFlag = true;
+
+        // 设置图标
+        SetIcon();
     }
 
     // 鼠标进入物品时显示提示

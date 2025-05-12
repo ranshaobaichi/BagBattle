@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -62,6 +63,7 @@ public class BulletSpawner : MonoBehaviour
     private bool isOnFire = false;  // 用来判断是否脚本被启动
     private bool isFiring = false; // 用来判断Fire协程是否正在运行
     public UnityEvent fireEvent;    //发射事件
+    public TextMeshProUGUI bulletCountText; // 用于显示子弹数量的文本
     #endregion
 
     #region 属性加成
@@ -119,6 +121,8 @@ public class BulletSpawner : MonoBehaviour
 
         initAttackSpeed = attackSpeed;
         // initLoadSpeed = loadSpeed;
+
+        // bulletCountText = GameObject.FindWithTag("BulletCountText").GetComponent<TextMeshPro>();
     }
 
     public void StartFire()
@@ -153,11 +157,24 @@ public class BulletSpawner : MonoBehaviour
             Debug.Log("Player is dead or time is up, stop firing.");
             return;
         }
+
         bool hasEnemies;
         lock (enemyInRangeLock)
         {
             hasEnemies = enemyInRange.Count != 0;
         }
+
+        // 更新子弹数量文本
+        if (bulletCountText != null)
+        {
+            bulletCountText.text = bullets.Count.ToString();
+        }
+        else
+        {
+            // Debug.LogError("BulletCountText is null");
+            bulletCountText = GameObject.FindWithTag("BulletCountText").GetComponent<TextMeshProUGUI>();
+        }
+
         if (attackFlag && hasEnemies && bullets.Count != 0 && isOnFire && !isFiring)
         {
             StartCoroutine(Fire());
@@ -213,7 +230,7 @@ public class BulletSpawner : MonoBehaviour
                 bullets.Enqueue(bulletType);
             }
         }
-        Debug.Log("has " + bullets.Count + " bullets in the queue.");
+        // Debug.Log("has " + bullets.Count + " bullets in the queue.");
     }
     //将发射标志设置为false，延迟time后再设置为true
     public IEnumerator SetFireFlagFalse(float time)
